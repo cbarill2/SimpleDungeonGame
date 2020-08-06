@@ -1,0 +1,43 @@
+#include <windows.h>
+#include <random>
+#include <map>
+#include "Tile.h"
+#include "Enemy.h"
+
+#pragma once
+
+namespace sf
+{
+    class Dungeon
+    {
+    private:
+        size_t m_numberOfTiles;
+        std::map<int, int> m_movableTiles;
+        const int c_tileMapWidth = 8;
+        const int c_tileMapHeight = 3;
+        Tile *m_tiles, m_movableTile;
+        Enemy *m_enemies;
+        Texture *m_texture, *m_enemyTexture;
+        int m_width, m_height, m_numberOfEnemies;
+        const float c_tileWidth = 100.0f;
+        const float c_tileHeight = 100.0f;
+        void generateProcedurally();
+        void populateWithEnemies();
+
+    public:
+        Dungeon();
+        ~Dungeon();
+
+        Dungeon(int, int, Texture &, Texture &);
+        void draw(RenderWindow *);
+        bool setMovableTiles(Vector2f, int);
+        void clearMovableTiles();
+        bool isMovableTile(int, int &);
+        Enemy * getEnemies() { return m_enemies; }
+        int getNumberOfEnemies() { return m_numberOfEnemies; }
+        bool isTileAtPosition(Vector2f &);
+        bool tileHasUnit(Vector2f);
+        Tile & getTileAtPosition(Vector2f);
+        bool isValidTile(Vector2f, int &);
+    };
+} // namespace sf

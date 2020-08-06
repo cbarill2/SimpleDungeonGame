@@ -1,0 +1,106 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "shell",
+			"label": "build debug",
+			"command": "cl.exe",
+			"args": [
+				"/std:c++17",
+				"/Zi",
+				"/EHsc",
+				"/MDd",
+				"/Fe:",
+				"learningSFML.dll",
+				"/DDEBUG",
+				"/DSFML_STATIC",
+				"${workspaceFolder}/*.cpp",
+				"winmm.lib",
+				"${workspaceFolder}/../../SFML 2.5.1/lib/sfml-system-s-d.lib",
+				"ws2_32.lib",
+				"${workspaceFolder}/../../SFML 2.5.1/lib/sfml-network-s-d.lib",
+				"${workspaceFolder}/../../SFML 2.5.1/lib/openal32.lib",
+				"${workspaceFolder}/../../SFML 2.5.1/lib/flac.lib",
+				"${workspaceFolder}/../../SFML 2.5.1/lib/vorbisenc.lib",
+				"${workspaceFolder}/../../SFML 2.5.1/lib/vorbisfile.lib",
+				"${workspaceFolder}/../../SFML 2.5.1/lib/vorbis.lib",
+				"${workspaceFolder}/../../SFML 2.5.1/lib/ogg.lib",
+				"${workspaceFolder}/../../SFML 2.5.1/lib/sfml-audio-s-d.lib",
+				"gdi32.lib",
+				"opengl32.lib",
+				"advapi32.lib",
+				"${workspaceFolder}/../../SFML 2.5.1/lib/sfml-window-s-d.lib",
+				"${workspaceFolder}/../../SFML 2.5.1/lib/freetype.lib",
+				"${workspaceFolder}/../../SFML 2.5.1/lib/sfml-graphics-s-d.lib",
+				"user32.lib",
+				"/I${workspaceFolder}/../../SFML 2.5.1/include",
+				"${workspaceFolder}/resources.res"
+			],
+			"options": {
+				"cwd": "..\\..\\build\\debug"
+			},
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		},
+		{
+			"type": "shell",
+			"label": "build release",
+			"command": "cl.exe",
+			"args": [
+				"/EHsc",
+				"/MD",
+				"/Fe:",
+				"learningSFML.exe",
+				"/DSFML_STATIC",
+				"${workspaceFolder}/*.cpp",
+				"winmm.lib",
+				"${workspaceFolder}/../../SFML 2.5.1/lib/sfml-system-s.lib",
+				"ws2_32.lib",
+				"${workspaceFolder}/../../SFML 2.5.1/lib/sfml-network-s.lib",
+				"${workspaceFolder}/../../SFML 2.5.1/lib/openal32.lib",
+				"${workspaceFolder}/../../SFML 2.5.1/lib/flac.lib",
+				"${workspaceFolder}/../../SFML 2.5.1/lib/vorbisenc.lib",
+				"${workspaceFolder}/../../SFML 2.5.1/lib/vorbisfile.lib",
+				"${workspaceFolder}/../../SFML 2.5.1/lib/vorbis.lib",
+				"${workspaceFolder}/../../SFML 2.5.1/lib/ogg.lib",
+				"${workspaceFolder}/../../SFML 2.5.1/lib/sfml-audio-s.lib",
+				"gdi32.lib",
+				"opengl32.lib",
+				"advapi32.lib",
+				"${workspaceFolder}/../../SFML 2.5.1/lib/sfml-window-s.lib",
+				"${workspaceFolder}/../../SFML 2.5.1/lib/freetype.lib",
+				"${workspaceFolder}/../../SFML 2.5.1/lib/sfml-graphics-s.lib",
+				"user32.lib",
+				"/I${workspaceFolder}/../../SFML 2.5.1/include",
+				"${workspaceFolder}/resources.res"
+			],
+			"options": {
+				"cwd": "..\\..\\build\\release"
+			},
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		},
+		{
+			"type": "shell",
+			"label": "build resource file",
+			"command": "rc.exe",
+			"args": [
+				"${workspaceFolder}/resources.rc"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		}
+	]
+}

@@ -1,0 +1,11 @@
+#include "windows.h"
+
+chest RCDATA "..\\..\\data\\chest.png"
+tiles RCDATA "..\\..\\data\\tilemap.png"
+player RCDATA "..\\..\\data\\player.png"
+enemy RCDATA "..\\..\\data\\enemy.png"
+d6 RCDATA "..\\..\\data\\d6.png"
+d8 RCDATA "..\\..\\data\\d8.png"
+d10 RCDATA "..\\..\\data\\d10.png"
+d12 RCDATA "..\\..\\data\\d12.png"
+font RCDATA "..\\..\\data\\arial.ttf"
