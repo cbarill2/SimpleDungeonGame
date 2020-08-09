@@ -4,28 +4,34 @@ using namespace sf;
 
 Unit::Unit() : Sprite()
 {
-    m_xCoord = 0;
-    m_yCoord = 0;
-    setPosition(m_xCoord * 100.0f, m_yCoord * 100.0f);
+    coords = {0,0};
+    setPosition(coords.x * 100.0f, coords.y * 100.0f);
     m_maxHealth = 100;
     m_currentHealth = m_maxHealth;
     m_level = 1;
+    m_maxAttackPoints = 1;
+    m_currentAttackPoints = m_maxAttackPoints;
     m_maxSpeed = 4;
     m_isPlayer = false;
     m_isSelected = false;
+    m_isAlive = true;
+    m_defense = 5;
 }
 
-Unit::Unit(int x, int y, Texture &texture) : Sprite(texture,IntRect(0,0,100,100))
+Unit::Unit(int x, int y, Texture &texture, bool isPlayer) : Sprite(texture,IntRect(0,0,100,100))
 {
-    m_xCoord = x;
-    m_yCoord = y;
-    setPosition(m_xCoord * 100.0f, m_yCoord * 100.0f);
-    m_maxHealth = 100;
+    coords = {x, y};
+    setPosition(coords.x * 100.0f, coords.y * 100.0f);
+    m_maxHealth = 5;
     m_currentHealth = m_maxHealth;
     m_level = 1;
+    m_maxAttackPoints = 1;
+    m_currentAttackPoints = m_maxAttackPoints;
     m_maxSpeed = 4;
-    m_isPlayer = false;
+    m_isPlayer = isPlayer;
     m_isSelected = false;
+    m_isAlive = true;
+    m_defense = 5;
 }
 
 Unit::~Unit()
@@ -34,31 +40,18 @@ Unit::~Unit()
 
 bool Unit::isUnitAtCoords(int x, int y)
 {
-    return (x == m_xCoord && y == m_yCoord);
-}
-
-void Unit::toggleSelect()
-{
-    m_isSelected = !m_isSelected;
-    if (m_isSelected)
-    {
-        setTextureRect(IntRect(0,100,100,100));
-    }
-    else
-    {
-        setTextureRect(IntRect(0,0,100,100));
-    }
+    return (x == coords.x && y == coords.y);
 }
 
 bool Unit::canMoveToCoords(int x, int y)
 {
     int xDelta, yDelta;
-    if (x > m_xCoord) { xDelta = x - m_xCoord; }
-    else { xDelta = m_xCoord - x; }
-    if (y > m_yCoord) { yDelta = y - m_yCoord; }
-    else { yDelta = m_yCoord - y; }
+    if (x > coords.x) { xDelta = x - coords.x; }
+    else { xDelta = coords.x - x; }
+    if (y > coords.y) { yDelta = y - coords.y; }
+    else { yDelta = coords.y - y; }
 
-    if (xDelta + yDelta <= m_speed)
+    if (xDelta + yDelta <= m_currentSpeed)
     {
         return true;
     }
@@ -68,18 +61,41 @@ bool Unit::canMoveToCoords(int x, int y)
 
 void Unit::updateCoords(int x, int y, int speed)
 {
-    m_xCoord = x;
-    m_yCoord = y;
-    m_speed = speed;
+    coords.x = x;
+    coords.y = y;
+    m_currentSpeed = speed;
 }
 
 void Unit::startTurn()
 {
-    m_speed = m_maxSpeed;
-    toggleSelect();
+    m_currentSpeed = m_maxSpeed;
+    m_currentAttackPoints = m_maxAttackPoints;
+    m_isSelected = true;
+    setTextureRect(IntRect(0,100,100,100));
 }
 
 void Unit::endTurn()
 {
-    toggleSelect();
+    m_isSelected = false;
+    setTextureRect(IntRect(0,0,100,100));
+}
+
+bool Unit::attack(Unit & target, int attackRoll)
+{
+    --m_currentAttackPoints;
+    bool isTargetAlive{true};
+    if (attackRoll > m_defense)
+    {
+        isTargetAlive = target.takeDamage();
+    }
+
+    return isTargetAlive;
+}
+
+bool Unit::takeDamage()
+{
+    if (--m_currentHealth > 0) return true;
+
+    m_isAlive = false;
+    return m_isAlive;
 }

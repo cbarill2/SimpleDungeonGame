@@ -1,6 +1,8 @@
 #include <SFML/Graphics.hpp>
 #include <random>
 
+#pragma once
+
 namespace sf
 {
     class Dice : public Sprite

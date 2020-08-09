@@ -7,7 +7,7 @@ Enemy::Enemy() : Unit()
     
 }
 
-Enemy::Enemy(int x, int y, Texture & texture) : Unit(x, y, texture)
+Enemy::Enemy(int x, int y, Texture & texture) : Unit(x, y, texture, false)
 {
     
 }
