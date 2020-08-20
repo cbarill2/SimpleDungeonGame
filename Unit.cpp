@@ -83,13 +83,14 @@ void Unit::endTurn()
 bool Unit::attack(Unit & target, int attackRoll)
 {
     --m_currentAttackPoints;
-    bool isTargetAlive{true};
+    bool attackHit{false};
     if (attackRoll > m_defense)
     {
-        isTargetAlive = target.takeDamage();
+        attackHit = true;
+        target.takeDamage();
     }
 
-    return isTargetAlive;
+    return attackHit;
 }
 
 bool Unit::takeDamage()

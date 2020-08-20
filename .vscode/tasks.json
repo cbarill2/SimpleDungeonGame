@@ -55,7 +55,7 @@
 				"/EHsc",
 				"/MD",
 				"/Fe:",
-				"learningSFML.exe",
+				"kidsdungeon.exe",
 				"/DSFML_STATIC",
 				"${workspaceFolder}/*.cpp",
 				"winmm.lib",
