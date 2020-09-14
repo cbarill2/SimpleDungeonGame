@@ -7,11 +7,12 @@ Dice::Dice() : Sprite()
 
 }
 
-Dice::Dice(int numberOfSides, Texture & texture) : Sprite(texture)
+Dice::Dice(int numberOfSides, Texture & texture, Vector2f position) : Sprite(texture)
 {
     m_numberOfSides = numberOfSides;
     random = std::mt19937(static_cast<std::mt19937::result_type>(std::time(nullptr)));
     m_diceRoll = std::uniform_int_distribution<>(1, m_numberOfSides);
+    setPosition(position);
 }
 
 Dice::~Dice()

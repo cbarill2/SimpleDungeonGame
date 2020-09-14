@@ -17,6 +17,7 @@ A tile-based, turn-based RPG with simple mechanics to digitize tabletop gaming f
 
 #### How To Play
 - Escape: exit the game
+- R: restart the game
 - Space: end current player's turn
 - W, A, S, D: move around the game board
 - Left-click: move current player to a movable tile, or attack an enemy unit

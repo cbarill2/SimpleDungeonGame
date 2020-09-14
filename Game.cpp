@@ -9,11 +9,24 @@ using namespace sf;
 
 int main()
 {
-    const int dungeonWidth = 40, dungeonHeight = 40, numberOfPlayers = 4;
+    int dungeonWidth = 30, dungeonHeight = 30, numberOfPlayers = 1;
+
+#if DEBUG
+    static std::mt19937 random{static_cast<std::mt19937::result_type>(std::time(nullptr))};
+    static std::uniform_int_distribution<> sizeRoll{20, 60};
+    dungeonWidth = sizeRoll(random);
+    dungeonHeight = sizeRoll(random);
+    numberOfPlayers = 4;
+#endif
+
     const float c_d6X = -4950.0f, c_d6Y = -4950.0f;
     const float c_d8X = -4950.0f, c_d8Y = -4800.0f;
     const float c_d10X = -4950.0f, c_d10Y = -4650.0f;
     const float c_d12X = -4950.0f, c_d12Y = -4500.0f;
+    const float c_tileWidthf = 100.0f;
+    const int c_tileWidthi = 100;
+    const Vector2f c_vectorf5050 = Vector2f(50.0f, 50.0f);
+
     int heldDie{0}, player{0}, playerRoll{0}, targetIndex;
     bool enemiesInRange{false}, playerCanMove{false}, inCombat{false};
 
@@ -29,12 +42,13 @@ int main()
 
     Texture d6Texture, d8Texture, d10Texture, d12Texture;
     image = ResourceLoader::LoadFromResource<Image>("dice");
+    d6Texture.loadFromImage(image, IntRect(0 * c_tileWidthi, 0, c_tileWidthi, c_tileWidthi));
     d6Texture.setSmooth(true);
-    d8Texture.loadFromImage(image, IntRect(100, 0, 100, 100));
+    d8Texture.loadFromImage(image, IntRect(1 * c_tileWidthi, 0, c_tileWidthi, c_tileWidthi));
     d8Texture.setSmooth(true);
-    d10Texture.loadFromImage(image, IntRect(200, 0, 100, 100));
+    d10Texture.loadFromImage(image, IntRect(2 * c_tileWidthi, 0, c_tileWidthi, c_tileWidthi));
     d10Texture.setSmooth(true);
-    d12Texture.loadFromImage(image, IntRect(300, 0, 100, 100));
+    d12Texture.loadFromImage(image, IntRect(3 * c_tileWidthi, 0, c_tileWidthi, c_tileWidthi));
     d12Texture.setSmooth(true);
 
     Dungeon dungeon(dungeonWidth, dungeonHeight, dungeonTexture, enemyTexture);
@@ -43,7 +57,7 @@ int main()
     std::vector<Unit> players;
     for (int i = 0; i < numberOfPlayers; i++)
     {
-        players.push_back(Player(i + 1, i + 1, playerTexture));
+        players.push_back(Player(i + 1, 1, playerTexture));
         dungeon.getTileAtPosition(players[i].getPosition()).toggleUnit();
     }
 
@@ -52,14 +66,13 @@ int main()
     playerCanMove = dungeon.buildMovableTilesMap(currentActiveUnit->getPosition(), currentActiveUnit->getSpeed());
     enemiesInRange = dungeon.buildAttackableTilesMap(currentActiveUnit->getPosition());
 
-    Dice d6{6, d6Texture}, d8{8, d8Texture}, d10{10, d10Texture}, d12{12, d12Texture};
-    d6.setPosition(Vector2f(c_d6X, c_d6Y));
-    d8.setPosition(Vector2f(c_d8X, c_d8Y));
-    d10.setPosition(Vector2f(c_d10X, c_d10Y));
-    d12.setPosition(Vector2f(c_d12X, c_d12Y));
+    Dice d6{6, d6Texture, Vector2f(c_d6X, c_d6Y)},
+        d8{8, d8Texture, Vector2f(c_d8X, c_d8Y)},
+        d10{10, d10Texture, Vector2f(c_d10X, c_d10Y)},
+        d12{12, d12Texture, Vector2f(c_d12X, c_d12Y)};
 
     Text rollText, turnText;
-    Font font = ResourceLoader::LoadFontFromResource("font");
+    Font font = ResourceLoader::LoadFromResource<Font>("font");
     rollText.setFont(font);
     rollText.setCharacterSize(50);
     rollText.setFillColor(Color::White);
@@ -70,11 +83,11 @@ int main()
     turnText.setPosition(-10495, -10025);
     turnText.setString("Move Player " + std::to_string(player + 1));
 
-    View playAreaView(currentActiveUnit->getPosition(), Vector2f(1000.0f, 1000.0f));
+    View playAreaView(currentActiveUnit->getPosition(), Vector2f(10 * c_tileWidthf, 10 * c_tileWidthf));
     playAreaView.setViewport(FloatRect(0, 0, 1, 0.9));
-    View diceView(Vector2f(-5600, -4600), Vector2f(1500.0f, 1500.0f));
+    View diceView(Vector2f(-5600, -4600), Vector2f(15 * c_tileWidthf, 15 * c_tileWidthf));
     diceView.setViewport(FloatRect(0, 0, 1, 1));
-    View hudView(Vector2f(-10000, -10000), Vector2f(1000.0f, 100.0f));
+    View hudView(Vector2f(-10000, -10000), Vector2f(10 * c_tileWidthf, 1 * c_tileWidthf));
     hudView.setViewport(FloatRect(0, 0.9, 1, 0.1));
 
     while (window.isOpen())
@@ -102,35 +115,56 @@ int main()
                     window.close();
                 }
                 break;
+                case Keyboard::R:
+                {
+                    dungeon.reset();
+                    for (auto &&player : players)
+                    {
+                        player.reset();
+                        dungeon.getTileAtPosition(player.getPosition()).toggleUnit();
+                    }
+                    enemies = dungeon.getEnemies();
+                    player = 0;
+                    currentActiveUnit = &players[player];
+                    currentActiveUnit->startTurn();
+                    dungeon.clearMovableTiles();
+                    playerCanMove = dungeon.buildMovableTilesMap(currentActiveUnit->getPosition(), currentActiveUnit->getSpeed());
+                    enemiesInRange = dungeon.buildAttackableTilesMap(currentActiveUnit->getPosition());
+                    playAreaView.setCenter(currentActiveUnit->getPosition());
+                    inCombat = false;
+                    heldDie = 0;
+                    turnText.setString("Move Player " + std::to_string(player + 1));
+                }
+                break;
                 case Keyboard::W:
                 {
-                    if (playAreaView.getCenter().y > 300.0f)
+                    if (playAreaView.getCenter().y > (3 * c_tileWidthf))
                     {
-                        playAreaView.move(0.0f, -100.0f);
+                        playAreaView.move(0.0f, -c_tileWidthf);
                     }
                 }
                 break;
                 case Keyboard::A:
                 {
-                    if (playAreaView.getCenter().x > 300.0f)
+                    if (playAreaView.getCenter().x > (3 * c_tileWidthf))
                     {
-                        playAreaView.move(-100.0f, 0.0f);
+                        playAreaView.move(-c_tileWidthf, 0.0f);
                     }
                 }
                 break;
                 case Keyboard::S:
                 {
-                    if (playAreaView.getCenter().y < (dungeonHeight - 3) * 100.0f)
+                    if (playAreaView.getCenter().y < ((dungeonHeight - 3) * c_tileWidthf))
                     {
-                        playAreaView.move(0.0f, 100.0f);
+                        playAreaView.move(0.0f, c_tileWidthf);
                     }
                 }
                 break;
                 case Keyboard::D:
                 {
-                    if (playAreaView.getCenter().x < (dungeonWidth - 3) * 100.0f)
+                    if (playAreaView.getCenter().x < ((dungeonWidth - 3) * c_tileWidthf))
                     {
-                        playAreaView.move(100.0f, 0.0f);
+                        playAreaView.move(c_tileWidthf, 0.0f);
                     }
                 }
                 break;
@@ -142,9 +176,9 @@ int main()
                     }
 
                     currentActiveUnit->endTurn();
-                    dungeon.clearMovableTiles();
                     currentActiveUnit = &players[player];
                     currentActiveUnit->startTurn();
+                    dungeon.clearMovableTiles();
                     playerCanMove = dungeon.buildMovableTilesMap(currentActiveUnit->getPosition(), currentActiveUnit->getSpeed());
                     enemiesInRange = dungeon.buildAttackableTilesMap(currentActiveUnit->getPosition());
                     playAreaView.setCenter(currentActiveUnit->getPosition());
@@ -193,8 +227,8 @@ int main()
                         Vector2f clickPosition = window.mapPixelToCoords(
                             Vector2i(event.mouseButton.x, event.mouseButton.y), playAreaView);
 
-                        int xCoord{(int)(clickPosition.x / 100)};
-                        int yCoord{(int)(clickPosition.y / 100)};
+                        int xCoord{(int)(clickPosition.x / c_tileWidthi)};
+                        int yCoord{(int)(clickPosition.y / c_tileWidthi)};
 
                         if (xCoord >= 0 && xCoord < dungeonWidth &&
                             yCoord >= 0 && yCoord < dungeonHeight)
@@ -206,8 +240,7 @@ int main()
                                 if (dungeon.isMovableTile(index, speedLeft))
                                 {
                                     dungeon.getTileAtPosition(currentActiveUnit->getPosition()).toggleUnit();
-                                    currentActiveUnit->setPosition(clickPosition);
-                                    currentActiveUnit->updateCoords(xCoord, yCoord, speedLeft);
+                                    currentActiveUnit->setPosition(xCoord, yCoord, speedLeft);
                                     dungeon.getTileAtPosition(clickPosition).toggleUnit();
                                     dungeon.clearMovableTiles();
 
@@ -282,14 +315,13 @@ int main()
                             turnText.setString("HIT!");
                             if (!targetEnemy->isAlive())
                             {
-                                turnText.setString("Enemy Defeated!");
                                 if (targetEnemy->isPlayer())
                                 {
                                     //TODO: Implement with AI--player killed
                                 }
                                 else
                                 {
-                                    dungeon.removeEnemy(targetIndex);
+                                    turnText.setString("Enemy Defeated!");
                                     enemies = dungeon.getEnemies();
                                     playerCanMove = dungeon.buildMovableTilesMap(currentActiveUnit->getPosition(), currentActiveUnit->getSpeed());
                                 }
@@ -312,31 +344,31 @@ int main()
                 float viewX = playAreaView.getSize().x;
                 Vector2f playAreaCenter = playAreaView.getCenter();
 
-                if (event.mouseWheelScroll.delta < 0 && viewX < 2400.0f)
+                if (event.mouseWheelScroll.delta < 0 && viewX < 24 * c_tileWidthf)
                 {
-                    playAreaView.zoom(1 + (200.0f / viewX));
+                    playAreaView.zoom(1 + (2 * c_tileWidthf / viewX));
                 }
-                else if (event.mouseWheelScroll.delta > 0 && viewX >= 1000.0f)
+                else if (event.mouseWheelScroll.delta > 0 && viewX >= 10 * c_tileWidthf)
                 {
-                    playAreaView.zoom((viewX - 200.0f) / viewX);
+                    playAreaView.zoom((viewX - (2 * c_tileWidthf)) / viewX);
                 }
 
-                if (playAreaCenter.x < 200)
+                if (playAreaCenter.x < (2 * c_tileWidthf))
                 {
                     playAreaView.setCenter(0.0f, playAreaCenter.y);
                 }
-                if (playAreaCenter.x > (dungeonWidth - 1) * 100.0f)
+                else if (playAreaCenter.x > (dungeonWidth - 1) * c_tileWidthf)
                 {
-                    playAreaView.setCenter(dungeonWidth * 100.0f, playAreaCenter.y);
+                    playAreaView.setCenter(dungeonWidth * c_tileWidthf, playAreaCenter.y);
                 }
 
-                if (playAreaCenter.y < 200)
+                if (playAreaCenter.y < (2 * c_tileWidthf))
                 {
                     playAreaView.setCenter(playAreaCenter.x, 0.0f);
                 }
-                if (playAreaCenter.y > (dungeonHeight - 1) * 100.0f)
+                else if (playAreaCenter.y > (dungeonHeight - 1) * c_tileWidthf)
                 {
-                    playAreaView.setCenter(playAreaCenter.x, dungeonHeight * 100.0f);
+                    playAreaView.setCenter(playAreaCenter.x, dungeonHeight * c_tileWidthf);
                 }
             }
             break;
@@ -350,9 +382,9 @@ int main()
                 }
 
                 currentActiveUnit->endTurn();
-                dungeon.clearMovableTiles();
                 currentActiveUnit = &players[player];
                 currentActiveUnit->startTurn();
+                dungeon.clearMovableTiles();
                 playerCanMove = dungeon.buildMovableTilesMap(currentActiveUnit->getPosition(), currentActiveUnit->getSpeed());
                 enemiesInRange = dungeon.buildAttackableTilesMap(currentActiveUnit->getPosition());
                 playAreaView.setCenter(currentActiveUnit->getPosition());
@@ -366,16 +398,16 @@ int main()
         // draw play area
         window.setView(playAreaView);
         dungeon.draw(&window);
+        for (auto &enemy : enemies)
+        {
+            window.draw(enemy.second);
+        }
         for (int i = 0; i < players.size(); i++)
         {
             if (players[i].isAlive())
             {
                 window.draw(players[i]);
             }
-        }
-        for (auto &enemy : enemies)
-        {
-            window.draw(enemy.second);
         }
 
         // draw dice
@@ -385,16 +417,16 @@ int main()
             switch (heldDie)
             {
             case 6:
-                d6.setPosition(window.mapPixelToCoords(Mouse::getPosition(window)) - Vector2f(50, 50));
+                d6.setPosition(window.mapPixelToCoords(Mouse::getPosition(window)) - c_vectorf5050);
                 break;
             case 8:
-                d8.setPosition(window.mapPixelToCoords(Mouse::getPosition(window)) - Vector2f(50, 50));
+                d8.setPosition(window.mapPixelToCoords(Mouse::getPosition(window)) - c_vectorf5050);
                 break;
             case 10:
-                d10.setPosition(window.mapPixelToCoords(Mouse::getPosition(window)) - Vector2f(50, 50));
+                d10.setPosition(window.mapPixelToCoords(Mouse::getPosition(window)) - c_vectorf5050);
                 break;
             case 12:
-                d12.setPosition(window.mapPixelToCoords(Mouse::getPosition(window)) - Vector2f(50, 50));
+                d12.setPosition(window.mapPixelToCoords(Mouse::getPosition(window)) - c_vectorf5050);
                 break;
             default:
                 break;

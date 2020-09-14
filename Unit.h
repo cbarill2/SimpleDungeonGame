@@ -9,6 +9,7 @@ namespace sf
     class Unit : public Sprite
     {
     private:
+        const int c_xpToLevel[5] = {5, 10, 25, 50, 100};
         IntRect m_deathTextureRect = IntRect(100, 0, 100, 100);
 
         Vector2i m_coords, m_startingCoords;

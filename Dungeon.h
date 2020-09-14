@@ -25,10 +25,9 @@ namespace sf
         void populateWithEnemies();
 
     public:
-        Dungeon();
+        Dungeon(int, int, Texture &, Texture &);
         ~Dungeon();
 
-        Dungeon(int, int, Texture &, Texture &);
         void draw(RenderWindow *);
         bool buildMovableTilesMap(Vector2f, int);
         void clearMovableTiles();
@@ -43,5 +42,6 @@ namespace sf
         Tile & getTileAtPosition(Vector2f);
         bool isValidTile(Vector2f, int &);
         void removeEnemy(int);
+        void reset();
     };
 } // namespace sf
