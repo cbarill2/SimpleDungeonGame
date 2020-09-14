@@ -30,7 +30,7 @@ int main()
     int heldDie{0}, player{0}, playerRoll{0}, targetIndex;
     bool enemiesInRange{false}, playerCanMove{false}, inCombat{false};
 
-    RenderWindow window(VideoMode(800, 600), "Dungeon Game for Kids");
+    RenderWindow window(VideoMode(800, 600), "Simple Dungeon Game");
 
     Texture dungeonTexture, playerTexture, enemyTexture;
     Image image = ResourceLoader::LoadFromResource<Image>("tiles");

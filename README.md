@@ -1,4 +1,4 @@
-# KidsDungeonGame
+# Simple Dungeon Game
 A tile-based, turn-based RPG with simple mechanics to digitize tabletop gaming for kids. It will feature a procedurally generated game board with monsters to defeat, prisoners to rescue, and treasure to collect.
 
 ### Functional Features
