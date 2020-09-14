@@ -1,5 +1,5 @@
 #include <SFML/Graphics.hpp>
-#include "ResourceLoader.h"
+#include "ResourceLoader.cpp"
 #include "Dungeon.h"
 #include "Player.h"
 #include "Enemy.h"
@@ -20,15 +20,15 @@ int main()
     RenderWindow window(VideoMode(800, 600), "Dungeon Game for Kids");
 
     Texture dungeonTexture, playerTexture, enemyTexture;
-    Texture d6Texture, d8Texture, d10Texture, d12Texture;
-    Image image = ResourceLoader::LoadImageFromResource("tiles");
+    Image image = ResourceLoader::LoadFromResource<Image>("tiles");
     dungeonTexture.loadFromImage(image);
-    image = ResourceLoader::LoadImageFromResource("player");
+    image = ResourceLoader::LoadFromResource<Image>("player");
     playerTexture.loadFromImage(image);
-    image = ResourceLoader::LoadImageFromResource("enemy");
+    image = ResourceLoader::LoadFromResource<Image>("enemy");
     enemyTexture.loadFromImage(image);
-    image = ResourceLoader::LoadImageFromResource("dice");
-    d6Texture.loadFromImage(image, IntRect(0, 0, 100, 100));
+
+    Texture d6Texture, d8Texture, d10Texture, d12Texture;
+    image = ResourceLoader::LoadFromResource<Image>("dice");
     d6Texture.setSmooth(true);
     d8Texture.loadFromImage(image, IntRect(100, 0, 100, 100));
     d8Texture.setSmooth(true);

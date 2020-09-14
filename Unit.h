@@ -9,28 +9,35 @@ namespace sf
     class Unit : public Sprite
     {
     private:
-        Vector2i coords;
+        IntRect m_deathTextureRect = IntRect(100, 0, 100, 100);
 
-        int m_currentHealth, m_maxHealth, m_currentSpeed, m_maxSpeed;
-        int m_level, m_currentAttackPoints, m_maxAttackPoints;
-        bool m_isPlayer, m_isSelected, m_isAlive;
+        Vector2i m_coords, m_startingCoords;
+
+        int m_maxHealth, m_maxSpeed, m_maxAttackPoints;
+        int m_currentHealth, m_currentSpeed, m_currentAttackPoints;
+        int m_experiencePoints, m_level, m_xpValue;
         int m_defense;
 
+        bool m_player, m_selected, m_alive;
+        void die();
+        void setStatsToMax();
+        void setMaxStats();
+
+    protected:
     public:
         Unit();
         Unit(int, int, Texture &, bool);
         ~Unit();
-        bool isUnitAtCoords(int, int);
-        bool isSelected() { return m_isSelected; }
-        bool isPlayer() { return m_isPlayer; }
-        bool isAlive() { return m_isAlive; }
+        bool isSelected() { return m_selected; }
+        bool isPlayer() { return m_player; }
+        bool isAlive() { return m_alive; }
         bool canAttack() { return (m_currentAttackPoints > 0); }
         int getSpeed() { return m_currentSpeed; }
-        bool canMoveToCoords(int, int);
-        void updateCoords(int, int, int);
+        void setPosition(int x, int y, int speed);
         void startTurn();
         void endTurn();
         bool attack(Unit &, int);
-        bool takeDamage();
+        int takeDamage();
+        void reset();
     };
 } // namespace sf
