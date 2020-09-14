@@ -2,13 +2,6 @@
 
 using namespace sf;
 
-Dungeon::Dungeon()
-{
-    m_width = 80, m_height = 60;
-    m_numberOfTiles = m_width * m_height;
-    m_tiles = new Tile[m_numberOfTiles];
-}
-
 Dungeon::Dungeon(int width, int height, Texture &texture, Texture &enemyTexture)
 {
     m_width = width;
@@ -84,7 +77,7 @@ bool Dungeon::isMovableTile(int tileIndex, int & speedLeft)
 bool Dungeon::isAttackableTile(int tileIndex)
 {
     auto search = m_attackableEnemies.find(tileIndex);
-    bool found = (search != m_attackableEnemies.end());
+    bool found = (search != m_attackableEnemies.end() && search->second.isAlive());
     return found;
 }
 
@@ -165,6 +158,16 @@ void Dungeon::removeEnemy(int defeatedEnemyIndex)
 {
     m_enemies.erase(defeatedEnemyIndex);
     m_tiles[defeatedEnemyIndex].toggleUnit();
+}
+
+void Dungeon::reset()
+{
+    delete[] m_tiles;
+    m_tiles = new Tile[m_numberOfTiles];
+    m_enemies.clear();
+
+    generateProcedurally();
+    populateWithEnemies();
 }
 
 void Dungeon::generateProcedurally()
@@ -273,7 +276,7 @@ void Dungeon::populateWithEnemies()
     m_numberOfEnemies = enemyRoll(random);
 
     int remainingEnemies = m_numberOfEnemies;
-    for (int i = 0; i < m_numberOfTiles && remainingEnemies > 0; i++)
+    for (int i = m_width + 5; i < m_numberOfTiles && remainingEnemies > 0; i++)
     {
         if (enemyChance(random) == 1 && !m_tiles[i].hasCollision() && !m_tiles[i].hasUnit())
         {
