@@ -8,7 +8,7 @@
             "name": "cl.exe - Build and debug active file",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "..\\..\\build\\debug\\learningSFML.dll",
+            "program": "..\\..\\build\\debug\\SimpleDungeon.dll",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

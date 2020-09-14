@@ -11,7 +11,7 @@
 				"/EHsc",
 				"/MDd",
 				"/Fe:",
-				"learningSFML.dll",
+				"SimpleDungeon.dll",
 				"/DDEBUG",
 				"/DSFML_STATIC",
 				"${workspaceFolder}/*.cpp",
@@ -55,10 +55,11 @@
 				"/EHsc",
 				"/MD",
 				"/Fe:",
-				"kidsdungeon.exe",
+				"SimpleDungeon.exe",
 				"/DSFML_STATIC",
 				"${workspaceFolder}/*.cpp",
 				"winmm.lib",
+				"${workspaceFolder}/../../SFML 2.5.1/lib/sfml-main.lib",
 				"${workspaceFolder}/../../SFML 2.5.1/lib/sfml-system-s.lib",
 				"ws2_32.lib",
 				"${workspaceFolder}/../../SFML 2.5.1/lib/sfml-network-s.lib",
@@ -77,7 +78,9 @@
 				"${workspaceFolder}/../../SFML 2.5.1/lib/sfml-graphics-s.lib",
 				"user32.lib",
 				"/I${workspaceFolder}/../../SFML 2.5.1/include",
-				"${workspaceFolder}/resources.res"
+				"${workspaceFolder}/resources.res",
+				"/link",
+				"/SUBSYSTEM:WINDOWS"
 			],
 			"options": {
 				"cwd": "..\\..\\build\\release"
