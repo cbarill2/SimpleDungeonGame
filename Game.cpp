@@ -27,8 +27,8 @@ int main()
     const int c_tileWidthi = 100;
     const Vector2f c_vectorf5050 = Vector2f(50.0f, 50.0f);
 
-    int heldDie{0}, player{0}, playerRoll{0}, targetIndex;
-    bool enemiesInRange{false}, playerCanMove{false}, inCombat{false};
+    int player{0}, playerRoll{0}, targetIndex;
+    bool enemiesInRange{false}, playerCanMove{false}, inCombat{false}, isRolling{false}, attackMenuIsOpen{false};
 
     RenderWindow window(VideoMode(800, 600), "Simple Dungeon Game");
 
@@ -69,7 +69,8 @@ int main()
     Dice d6{6, d6Texture, Vector2f(c_d6X, c_d6Y)},
         d8{8, d8Texture, Vector2f(c_d8X, c_d8Y)},
         d10{10, d10Texture, Vector2f(c_d10X, c_d10Y)},
-        d12{12, d12Texture, Vector2f(c_d12X, c_d12Y)};
+        d12{12, d12Texture, Vector2f(c_d12X, c_d12Y)},
+        *heldDie;
 
     Text rollText, turnText;
     Font font = ResourceLoader::LoadFromResource<Font>("font");
@@ -132,7 +133,7 @@ int main()
                     enemiesInRange = dungeon.buildAttackableTilesMap(currentActiveUnit->getPosition());
                     playAreaView.setCenter(currentActiveUnit->getPosition());
                     inCombat = false;
-                    heldDie = 0;
+                    isRolling = false;
                     turnText.setString("Move Player " + std::to_string(player + 1));
                 }
                 break;
@@ -183,7 +184,7 @@ int main()
                     enemiesInRange = dungeon.buildAttackableTilesMap(currentActiveUnit->getPosition());
                     playAreaView.setCenter(currentActiveUnit->getPosition());
                     inCombat = false;
-                    heldDie = 0;
+                    isRolling = false;
                     turnText.setString("Move Player " + std::to_string(player + 1));
                 }
                 break;
@@ -203,24 +204,25 @@ int main()
 
                         if (d6.getGlobalBounds().contains(clickPosition))
                         {
-                            heldDie = 6;
+                            heldDie = &d6;
                         }
                         else if (d8.getGlobalBounds().contains(clickPosition))
                         {
-                            heldDie = 8;
+                            heldDie = &d8;
                         }
                         else if (d10.getGlobalBounds().contains(clickPosition))
                         {
-                            heldDie = 10;
+                            heldDie = &d10;
                         }
                         else if (d12.getGlobalBounds().contains(clickPosition))
                         {
-                            heldDie = 12;
+                            heldDie = &d12;
                         }
                         else
                         {
                             break;
                         }
+                        isRolling = true;
                     }
                     else
                     {
@@ -264,6 +266,12 @@ int main()
                 break;
                 case Mouse::Right:
                 {
+                    if (isRolling)
+                    {
+                        isRolling = false;
+                        heldDie->resetPosition();
+                    }
+                    
                 }
                 break;
                 }
@@ -271,43 +279,18 @@ int main()
             break;
             case Event::MouseButtonReleased:
             {
-                if (event.mouseButton.button == Mouse::Left)
+                switch (event.mouseButton.button)
                 {
-                    switch (heldDie)
+                case Mouse::Left:
+                {
+                    if (isRolling)
                     {
-                    case 6:
-                    {
-                        playerRoll = d6.roll();
-                        rollText.setString("D6: " + std::to_string(playerRoll));
-                        d6.setPosition(Vector2f(c_d6X, c_d6Y));
-                    }
-                    break;
-                    case 8:
-                    {
-                        playerRoll = d8.roll();
-                        rollText.setString("D8: " + std::to_string(playerRoll));
-                        d8.setPosition(Vector2f(c_d8X, c_d8Y));
-                    }
-                    break;
-                    case 10:
-                    {
-                        playerRoll = d10.roll();
-                        rollText.setString("D10: " + std::to_string(playerRoll));
-                        d10.setPosition(Vector2f(c_d10X, c_d10Y));
-                    }
-                    break;
-                    case 12:
-                    {
-                        playerRoll = d12.roll();
-                        rollText.setString("D12: " + std::to_string(playerRoll));
-                        d12.setPosition(Vector2f(c_d12X, c_d12Y));
-                    }
-                    break;
-                    default:
-                        break;
+                        playerRoll = heldDie->roll();
+                        rollText.setString(heldDie->toString() + ": " + std::to_string(playerRoll));
+                        heldDie->resetPosition();
                     }
 
-                    if (inCombat && heldDie > 0)
+                    if (inCombat && isRolling)
                     {
                         Enemy *targetEnemy = &dungeon.getEnemyOnTile(targetIndex);
                         if (currentActiveUnit->attack(*targetEnemy, playerRoll))
@@ -334,8 +317,13 @@ int main()
 
                         inCombat = false;
                     }
-
-                    heldDie = 0;
+                    isRolling = false;
+                }
+                break;
+                case Mouse::Right:
+                {
+                }
+                break;
                 }
             }
             break;
@@ -389,7 +377,7 @@ int main()
                 enemiesInRange = dungeon.buildAttackableTilesMap(currentActiveUnit->getPosition());
                 playAreaView.setCenter(currentActiveUnit->getPosition());
                 inCombat = false;
-                heldDie = 0;
+                isRolling = false;
                 turnText.setString("Move Player " + std::to_string(player + 1));
             }
         }
@@ -414,22 +402,9 @@ int main()
         if (inCombat)
         {
             window.setView(diceView);
-            switch (heldDie)
+            if (isRolling)
             {
-            case 6:
-                d6.setPosition(window.mapPixelToCoords(Mouse::getPosition(window)) - c_vectorf5050);
-                break;
-            case 8:
-                d8.setPosition(window.mapPixelToCoords(Mouse::getPosition(window)) - c_vectorf5050);
-                break;
-            case 10:
-                d10.setPosition(window.mapPixelToCoords(Mouse::getPosition(window)) - c_vectorf5050);
-                break;
-            case 12:
-                d12.setPosition(window.mapPixelToCoords(Mouse::getPosition(window)) - c_vectorf5050);
-                break;
-            default:
-                break;
+                heldDie->setPosition(window.mapPixelToCoords(Mouse::getPosition(window)) - c_vectorf5050);
             }
 
             window.draw(d6);
