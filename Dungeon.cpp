@@ -22,16 +22,19 @@ Dungeon::~Dungeon()
 
 void Dungeon::draw(RenderWindow *window)
 {
+    for (const auto &indexTilePair : m_movableTiles)
+    {
+        m_tiles[indexTilePair.first].setFillColor(Color::Cyan);
+    }
+
     for (int i = 0; i < m_numberOfTiles; ++i)
     {
         window->draw(m_tiles[i]);
     }
 
-    for (const auto & indexTilePair : m_movableTiles)
+    for (const auto &indexTilePair : m_movableTiles)
     {
-        Vector2f position = m_tiles[indexTilePair.first].getPosition();
-        m_movableTile.setPosition(position.x, position.y, -1, -1);
-        window->draw(m_movableTile);
+        m_tiles[indexTilePair.first].setFillColor(Color::White);
     }
 }
 
@@ -66,7 +69,7 @@ void Dungeon::clearMovableTiles()
     m_movableTiles.clear();
 }
 
-bool Dungeon::isMovableTile(int tileIndex, int & speedLeft)
+bool Dungeon::isMovableTile(int tileIndex, int &speedLeft)
 {
     auto search = m_movableTiles.find(tileIndex);
     bool found = (search != m_movableTiles.end());
@@ -259,9 +262,6 @@ void Dungeon::generateProcedurally()
 
             currentWidth = xEdge - 1;
         }
-        m_movableTile = Tile(tileSize, true, false);
-        m_movableTile.setTexture(m_texture);
-        m_movableTile.setTextureRect(IntRect(0, 200, c_tileWidth, c_tileHeight));
     }
 
     delete[] heights;

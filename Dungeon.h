@@ -16,7 +16,7 @@ namespace sf
         std::map<int, Enemy> m_enemies, m_attackableEnemies;
         const int c_tileMapWidth = 8;
         const int c_tileMapHeight = 3;
-        Tile *m_tiles, m_movableTile;
+        Tile *m_tiles;
         Texture *m_texture, *m_enemyTexture;
         int m_width, m_height, m_numberOfEnemies;
         const float c_tileWidth = 100.0f;
