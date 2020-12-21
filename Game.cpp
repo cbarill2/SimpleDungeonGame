@@ -32,13 +32,35 @@ int main()
 
     RenderWindow window(VideoMode(800, 600), "Simple Dungeon Game");
 
-    Texture dungeonTexture, playerTexture, enemyTexture;
     Image image = ResourceLoader::LoadFromResource<Image>("tiles");
+    Texture dungeonTexture, playerTexture, enemyTexture, fadedPlayerTexture, attackableEnemyTexture;
     dungeonTexture.loadFromImage(image);
     image = ResourceLoader::LoadFromResource<Image>("player");
     playerTexture.loadFromImage(image);
+    for (size_t i = 0; i < 100; i++)
+    {
+        for (size_t j = 0; j < 100; j++)
+        {
+            Color c = image.getPixel(i, j);
+            c.a *= 0.6;
+            image.setPixel(i, j, c);
+        }
+    }
+    fadedPlayerTexture.loadFromImage(image);
     image = ResourceLoader::LoadFromResource<Image>("enemy");
     enemyTexture.loadFromImage(image);
+    for (size_t i = 0; i < 100; i++)
+    {
+        for (size_t j = 0; j < 100; j++)
+        {
+            Color c = image.getPixel(i, j);
+            if (c.a <= 10)
+            {
+                image.setPixel(i, j, Color::Red);
+            }
+        }
+    }
+    attackableEnemyTexture.loadFromImage(image);
 
     Texture d6Texture, d8Texture, d10Texture, d12Texture;
     image = ResourceLoader::LoadFromResource<Image>("dice");
@@ -388,12 +410,31 @@ int main()
         dungeon.draw(&window);
         for (auto &enemy : enemies)
         {
+            if (currentActiveUnit->canAttack() && dungeon.isAttackableTile(enemy.first))
+            {
+                enemy.second.setTexture(attackableEnemyTexture);
+            }
+            else
+            {
+                enemy.second.setTexture(enemyTexture);
+            }
+            
             window.draw(enemy.second);
         }
         for (int i = 0; i < players.size(); i++)
         {
             if (players[i].isAlive())
             {
+                if (&players[i] == currentActiveUnit)
+                {
+                    // players[i].setColor(Color::White);
+                    players[i].setTexture(playerTexture);
+                }
+                else
+                {
+                    // players[i].setColor(Color::Cyan);
+                    players[i].setTexture(fadedPlayerTexture);
+                }
                 window.draw(players[i]);
             }
         }
