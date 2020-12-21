@@ -226,13 +226,22 @@ void Dungeon::generateProcedurally()
                         || (y == minHeight || y == yEdge - 1)     //wall going from left to right
                         || (x == currentWidth || x == xEdge - 1)) //wall going from top to bottom
                     {
-                        if (numberOfDoors > 0 && ((xEdge - x) == roomWidth / 2 || (yEdge - y) == roomHeight / 2))
+                        if (y > 0 && x > 0 && y != m_height - 1 && x != m_width - 1             // no doors on outer walls
+                            && numberOfDoors > 0                                                //we have more doors to place
+                            && ((xEdge - x) == roomWidth / 2 || (yEdge - y) == roomHeight / 2)) //try to center doors
                         {
+                            // door tile
                             tile = 2;
                             numberOfDoors--;
                         }
+                        else if (x == 1 && y == 0)
+                        {
+                            // dungeon entrance door
+                            tile = 2;
+                        }
                         else
                         {
+                            // wall tile
                             tile = 9;
                         }
                     }

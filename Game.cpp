@@ -81,7 +81,7 @@ int main()
     std::vector<Unit> players;
     for (int i = 0; i < numberOfPlayers; i++)
     {
-        players.push_back(Player(i + 1, 1, playerTexture));
+        players.push_back(Player(1, 0, playerTexture));
         dungeon.getTileAtPosition(players[i].getPosition()).toggleUnit();
     }
 
