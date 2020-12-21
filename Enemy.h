@@ -9,7 +9,7 @@ namespace sf
     private:
     public:
         Enemy();
-        Enemy(int, int, Texture &);
+        Enemy(int x, int y, Texture &texture);
         ~Enemy();
     };
 } // namespace sf

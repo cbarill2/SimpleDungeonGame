@@ -16,7 +16,7 @@ namespace sf
 
     public:
         Dice();
-        Dice(int, Texture &, Vector2f position);
+        Dice(int numberOfSides, Texture &texture, Vector2f position);
         ~Dice();
         int roll();
         void resetPosition();

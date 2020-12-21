@@ -1,6 +1,5 @@
 #include <windows.h>
 #include <SFML/Graphics.hpp>
-#include "Dice.h"
 
 #pragma once
 
@@ -26,7 +25,7 @@ namespace sf
     protected:
     public:
         Unit();
-        Unit(int, int, Texture &, bool);
+        Unit(int x, int y, Texture &texture, bool isPlayer);
         ~Unit();
         bool isSelected() { return m_selected; }
         bool isPlayer() { return m_player; }
@@ -36,7 +35,7 @@ namespace sf
         void setPosition(int x, int y, int speed);
         void startTurn();
         void endTurn();
-        bool attack(Unit &, int);
+        bool attack(Unit &target, int attackRoll);
         int takeDamage();
         void reset();
     };

@@ -26,23 +26,23 @@ namespace sf
         void populateWithEnemies();
 
     public:
-        Dungeon(int, int, Texture &, Texture &);
+        Dungeon(int width, int height, Texture &texture, Texture &enemyTexture);
         ~Dungeon();
 
-        void draw(RenderWindow *);
-        bool buildMovableTilesMap(Vector2f, int);
+        void draw(RenderWindow *window);
+        bool buildMovableTilesMap(Vector2f playerPosition, int playerSpeed);
         void clearMovableTiles();
-        bool isMovableTile(int, int &);
-        bool isAttackableTile(int);
+        bool isMovableTile(int tileIndex, int &speedLeft);
+        bool isAttackableTile(int tileIndex);
         Enemy & getEnemyOnTile(int index) { return m_enemies[index]; };
         std::map<int, Enemy> & getEnemies() { return m_enemies; }
         int getNumberOfEnemies() { return m_numberOfEnemies; }
         bool buildAttackableTilesMap(Vector2f, int = 1);
-        bool isTileAtPosition(Vector2f &);
-        bool tileHasUnit(Vector2f);
-        Tile & getTileAtPosition(Vector2f);
-        bool isValidTile(Vector2f, int &);
-        void removeEnemy(int);
+        bool isTileAtPosition(Vector2f &position);
+        bool tileHasUnit(Vector2f position);
+        Tile & getTileAtPosition(Vector2f position);
+        bool isValidTile(Vector2f position, int &tileIndex);
+        void removeEnemy(int defeatedEnemyIndex);
         void reset();
     };
 } // namespace sf

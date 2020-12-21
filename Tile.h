@@ -13,14 +13,14 @@ namespace sf
         Tile();
         ~Tile();
 
-        Tile(Vector2f, bool, bool);
+        Tile(Vector2f size, bool hasCollision, bool isDoor);
 
-        void setPosition(float, float, int, int);
+        void setPosition(float x, float y, int xCoord, int yCoord);
         int getX() { return getPosition().x; }
         int getY() { return getPosition().y; }
         int getXCoord() { return m_xCoord; }
         int getYCoord() { return m_yCoord; }
-        bool contains(float, float);
+        bool contains(float x, float y);
         bool hasUnit() { return m_hasUnit; }
         bool hasCollision() { return m_hasCollision; }
         bool isDoor() { return m_isDoor; }

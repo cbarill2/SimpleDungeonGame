@@ -10,7 +10,7 @@ namespace sf
     private:
     public:
         Player();
-        Player(int, int, Texture &);
+        Player(int x, int y, Texture &texture);
         ~Player();
     };
 } // namespace sf

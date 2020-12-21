@@ -32,16 +32,16 @@ int main()
     int player{0}, playerRoll{0}, targetIndex;
     bool enemiesInRange{false}, playerCanMove{false}, inCombat{false}, isRolling{false}, attackMenuIsOpen{false};
 
-    RenderWindow window(VideoMode(800, 600), "Simple Dungeon Game");
+    RenderWindow window(VideoMode(1024, 768), "Simple Dungeon Game");
 
     Image image = ResourceLoader::LoadFromResource<Image>("tiles");
     Texture dungeonTexture, playerTexture, enemyTexture, fadedPlayerTexture, attackableEnemyTexture;
     dungeonTexture.loadFromImage(image);
     image = ResourceLoader::LoadFromResource<Image>("player");
     playerTexture.loadFromImage(image);
-    for (size_t i = 0; i < 100; i++)
+    for (uint32_t i = 0; i < c_tileWidthi; i++)
     {
-        for (size_t j = 0; j < 100; j++)
+        for (uint32_t j = 0; j < c_tileWidthi; j++)
         {
             Color c = image.getPixel(i, j);
             c.a *= 0.6;
@@ -51,9 +51,9 @@ int main()
     fadedPlayerTexture.loadFromImage(image);
     image = ResourceLoader::LoadFromResource<Image>("enemy");
     enemyTexture.loadFromImage(image);
-    for (size_t i = 0; i < 100; i++)
+    for (uint32_t i = 0; i < c_tileWidthi; i++)
     {
-        for (size_t j = 0; j < 100; j++)
+        for (uint32_t j = 0; j < c_tileWidthi; j++)
         {
             Color c = image.getPixel(i, j);
             if (c.a <= 10)
@@ -294,6 +294,11 @@ int main()
                     {
                         isRolling = false;
                         heldDie->resetPosition();
+                    }
+                    else if (inCombat)
+                    {
+                        inCombat = false;
+                        turnText.setString("Move Player " + std::to_string(player + 1));
                     }
                     
                 }
