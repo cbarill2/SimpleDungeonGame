@@ -3,6 +3,7 @@
 #include <map>
 #include "Tile.h"
 #include "Enemy.h"
+#include "PRNG.h"
 
 #pragma once
 

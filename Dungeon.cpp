@@ -177,9 +177,9 @@ void Dungeon::generateProcedurally()
 {
     int *heights{new int[m_width]{0}};
     Vector2f tileSize(c_tileWidth, c_tileHeight);
-    static std::mt19937 random{static_cast<std::mt19937::result_type>(std::time(nullptr))};
-    static std::uniform_int_distribution<> sizeRoll{6, 10};
-    static std::uniform_int_distribution<> doorRoll{0, 4};
+    PRNG prng{};
+    prng.seed64(1);
+    prng.seed128(prng.nextSplitMix64(), prng.nextSplitMix64());
     int roomWidth, roomHeight, tile;
     int currentWidth = 0, currentHeight = 0, minHeight = m_height;
     while (currentHeight < m_height - 1)
@@ -188,8 +188,8 @@ void Dungeon::generateProcedurally()
         while (currentWidth < m_width - 1)
         {
             currentHeight = heights[currentWidth + 1];
-            roomHeight = sizeRoll(random);
-            roomWidth = sizeRoll(random);
+            roomHeight = prng.random_roll(5, 6);
+            roomWidth = prng.random_roll(5, 6);
 
             int yEdge = currentHeight + roomHeight;
             int xEdge = currentWidth + roomWidth;
@@ -211,7 +211,7 @@ void Dungeon::generateProcedurally()
                 }
             }
 
-            int numberOfDoors = doorRoll(random);
+            int numberOfDoors = prng.random_roll(4);
 
             for (int y = minHeight; y < yEdge; y++)
             {
@@ -269,16 +269,16 @@ void Dungeon::generateProcedurally()
 
 void Dungeon::populateWithEnemies()
 {
-    static std::mt19937 random{static_cast<std::mt19937::result_type>(std::time(nullptr))};
-    static std::uniform_int_distribution<> enemyRoll{18, 21};
-    static std::uniform_int_distribution<> enemyChance{1, 50};
+    PRNG prng{};
+    prng.seed64(1);
+    prng.seed128(prng.nextSplitMix64(), prng.nextSplitMix64());
 
-    m_numberOfEnemies = enemyRoll(random);
+    m_numberOfEnemies = prng.random_roll(4, 18);
 
     int remainingEnemies = m_numberOfEnemies;
     for (int i = m_width + 5; i < m_numberOfTiles && remainingEnemies > 0; i++)
     {
-        if (enemyChance(random) == 1 && !m_tiles[i].hasCollision() && !m_tiles[i].hasUnit())
+        if (prng.random_roll(50) == 1 && !m_tiles[i].hasCollision() && !m_tiles[i].hasUnit())
         {
             m_enemies[i] = Enemy(m_tiles[i].getXCoord(), m_tiles[i].getYCoord(), *m_enemyTexture);
             m_tiles[i].toggleUnit();

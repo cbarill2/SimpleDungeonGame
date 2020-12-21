@@ -4,6 +4,7 @@
 #include "Player.h"
 #include "Enemy.h"
 #include "Dice.h"
+#include "PRNG.h"
 
 using namespace sf;
 
@@ -12,10 +13,11 @@ int main()
     int dungeonWidth = 30, dungeonHeight = 30, numberOfPlayers = 1;
 
 #if DEBUG
-    static std::mt19937 random{static_cast<std::mt19937::result_type>(std::time(nullptr))};
-    static std::uniform_int_distribution<> sizeRoll{20, 60};
-    dungeonWidth = sizeRoll(random);
-    dungeonHeight = sizeRoll(random);
+    PRNG prng{};
+    prng.seed64(0);
+    prng.seed128(prng.nextSplitMix64(), prng.nextSplitMix64());
+    dungeonWidth = prng.random_roll(41, 20);
+    dungeonHeight = prng.random_roll(41, 20);
     numberOfPlayers = 4;
 #endif
 

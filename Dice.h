@@ -1,5 +1,6 @@
 #include <SFML/Graphics.hpp>
-#include <random>
+#include <ctime>
+#include "PRNG.h"
 
 #pragma once
 
@@ -9,10 +10,10 @@ namespace sf
     {
     private:
         int m_numberOfSides;
-        std::mt19937 random;
-        std::uniform_int_distribution<> m_diceRoll;
-    
         Vector2f m_homePosition;
+        uint64_t seed64;
+        PRNG prng;
+
     public:
         Dice();
         Dice(int, Texture &, Vector2f position);

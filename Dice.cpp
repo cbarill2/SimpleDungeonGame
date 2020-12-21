@@ -9,8 +9,15 @@ Dice::Dice() : Sprite()
 Dice::Dice(int numberOfSides, Texture &texture, Vector2f position) : Sprite(texture)
 {
     m_numberOfSides = numberOfSides;
-    random = std::mt19937(static_cast<std::mt19937::result_type>(std::time(nullptr)));
-    m_diceRoll = std::uniform_int_distribution<>(1, m_numberOfSides);
+    prng = PRNG();
+    if (seed64 == 0)
+    {
+        time_t now;
+        time(&now);
+        seed64 = now - m_numberOfSides;
+    }
+    prng.seed64(seed64); //probably not good to always use the same starting seed...
+    prng.seed128(prng.nextSplitMix64(), prng.nextSplitMix64());
     m_homePosition = Vector2f(position);
     setPosition(position);
 }
@@ -21,7 +28,7 @@ Dice::~Dice()
 
 int Dice::roll()
 {
-    return m_diceRoll(random);
+    return prng.random_roll(m_numberOfSides);
 }
 
 void Dice::resetPosition()
