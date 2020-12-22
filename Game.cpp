@@ -6,11 +6,9 @@
 #include "Dice.h"
 #include "PRNG.h"
 
-using namespace sf;
-
 int main()
 {
-    int dungeonWidth = 30, dungeonHeight = 30, numberOfPlayers = 1;
+    int dungeonWidth{30}, dungeonHeight{30}, numberOfPlayers{1};
 
 #if DEBUG
     PRNG prng{};
@@ -21,129 +19,92 @@ int main()
     numberOfPlayers = 4;
 #endif
 
-    const float c_d6X = -4950.0f, c_d6Y = -4950.0f;
-    const float c_d8X = -4950.0f, c_d8Y = -4800.0f;
-    const float c_d10X = -4950.0f, c_d10Y = -4650.0f;
-    const float c_d12X = -4950.0f, c_d12Y = -4500.0f;
-    const float c_tileWidthf = 100.0f;
-    const int c_tileWidthi = 100;
-    const Vector2f c_vectorf5050 = Vector2f(50.0f, 50.0f);
+    const float c_d6X{-4950.0f}, c_d6Y{-4950.0f};
+    const float c_d8X{-4950.0f}, c_d8Y{-4800.0f};
+    const float c_d10X{-4950.0f}, c_d10Y{-4650.0f};
+    const float c_d12X{-4950.0f}, c_d12Y{-4500.0f};
+    const float c_tileWidthf{100.0f};
+    const int c_tileWidthi{100};
+    const sf::Vector2f c_vectorf5050{50.0f, 50.0f};
 
-    int player{0}, playerRoll{0}, targetIndex;
+    int player{0}, playerRoll{0}, targetIndex{0};
     bool enemiesInRange{false}, playerCanMove{false}, inCombat{false}, isRolling{false}, attackMenuIsOpen{false};
 
-    RenderWindow window(VideoMode(1024, 768), "Simple Dungeon Game");
+    sf::RenderWindow window{sf::VideoMode{1024, 768}, "Simple Dungeon Game"};
 
-    Image image = ResourceLoader::LoadFromResource<Image>("tiles");
-    Texture dungeonTexture, playerTexture, enemyTexture, fadedPlayerTexture, attackableEnemyTexture;
-    dungeonTexture.loadFromImage(image);
-    image = ResourceLoader::LoadFromResource<Image>("player");
-    playerTexture.loadFromImage(image);
-    for (uint32_t i = 0; i < c_tileWidthi; i++)
-    {
-        for (uint32_t j = 0; j < c_tileWidthi; j++)
-        {
-            Color c = image.getPixel(i, j);
-            c.a *= 0.6;
-            image.setPixel(i, j, c);
-        }
-    }
-    fadedPlayerTexture.loadFromImage(image);
-    image = ResourceLoader::LoadFromResource<Image>("enemy");
-    enemyTexture.loadFromImage(image);
-    for (uint32_t i = 0; i < c_tileWidthi; i++)
-    {
-        for (uint32_t j = 0; j < c_tileWidthi; j++)
-        {
-            Color c = image.getPixel(i, j);
-            if (c.a <= 10)
-            {
-                image.setPixel(i, j, Color::Red);
-            }
-        }
-    }
-    attackableEnemyTexture.loadFromImage(image);
+    sf::Font font;
+    sf::Texture dungeonTexture, playerTexture, enemyTexture, fadedPlayerTexture, attackableEnemyTexture, diceTexture;
+    ResourceLoader::LoadResources(dungeonTexture, playerTexture, fadedPlayerTexture, enemyTexture, attackableEnemyTexture, diceTexture, font);
 
-    Texture d6Texture, d8Texture, d10Texture, d12Texture;
-    image = ResourceLoader::LoadFromResource<Image>("dice");
-    d6Texture.loadFromImage(image, IntRect(0 * c_tileWidthi, 0, c_tileWidthi, c_tileWidthi));
-    d6Texture.setSmooth(true);
-    d8Texture.loadFromImage(image, IntRect(1 * c_tileWidthi, 0, c_tileWidthi, c_tileWidthi));
-    d8Texture.setSmooth(true);
-    d10Texture.loadFromImage(image, IntRect(2 * c_tileWidthi, 0, c_tileWidthi, c_tileWidthi));
-    d10Texture.setSmooth(true);
-    d12Texture.loadFromImage(image, IntRect(3 * c_tileWidthi, 0, c_tileWidthi, c_tileWidthi));
-    d12Texture.setSmooth(true);
+    sf::Text rollText, turnText;
+    rollText.setFont(font);
+    rollText.setCharacterSize(50);
+    rollText.setFillColor(sf::Color::White);
+    rollText.setPosition(-9700, -10025);
+    turnText.setFont(font);
+    turnText.setCharacterSize(50);
+    turnText.setFillColor(sf::Color::White);
+    turnText.setPosition(-10495, -10025);
+    turnText.setString("Move Player " + std::to_string(player + 1));
 
-    Dungeon dungeon(dungeonWidth, dungeonHeight, dungeonTexture, enemyTexture);
+    Dice d6{6, diceTexture, sf::IntRect{0 * c_tileWidthi, 0, c_tileWidthi, c_tileWidthi}, sf::Vector2f{c_d6X, c_d6Y}},
+        d8{8, diceTexture, sf::IntRect{1 * c_tileWidthi, 0, c_tileWidthi, c_tileWidthi}, sf::Vector2f{c_d8X, c_d8Y}},
+        d10{10, diceTexture, sf::IntRect{2 * c_tileWidthi, 0, c_tileWidthi, c_tileWidthi}, sf::Vector2f{c_d10X, c_d10Y}},
+        d12{12, diceTexture, sf::IntRect{3 * c_tileWidthi, 0, c_tileWidthi, c_tileWidthi}, sf::Vector2f{c_d12X, c_d12Y}},
+        *heldDie{nullptr};
 
+    Dungeon dungeon{dungeonWidth, dungeonHeight, dungeonTexture, enemyTexture};
     std::map<int, Enemy> enemies = dungeon.getEnemies();
+    
     std::vector<Unit> players;
-    for (int i = 0; i < numberOfPlayers; i++)
+    for (int i = 0; i < numberOfPlayers; ++i)
     {
-        players.push_back(Player(1, 0, playerTexture));
-        dungeon.getTileAtPosition(players[i].getPosition()).toggleUnit();
+        players.push_back(Player{1, 0, playerTexture});
     }
 
     Unit *currentActiveUnit = &players[player];
+    dungeon.getTileAtPosition(currentActiveUnit->getPosition()).toggleUnit();
     currentActiveUnit->startTurn();
     playerCanMove = dungeon.buildMovableTilesMap(currentActiveUnit->getPosition(), currentActiveUnit->getSpeed());
     enemiesInRange = dungeon.buildAttackableTilesMap(currentActiveUnit->getPosition());
 
-    Dice d6{6, d6Texture, Vector2f(c_d6X, c_d6Y)},
-        d8{8, d8Texture, Vector2f(c_d8X, c_d8Y)},
-        d10{10, d10Texture, Vector2f(c_d10X, c_d10Y)},
-        d12{12, d12Texture, Vector2f(c_d12X, c_d12Y)},
-        *heldDie;
-
-    Text rollText, turnText;
-    Font font = ResourceLoader::LoadFromResource<Font>("font");
-    rollText.setFont(font);
-    rollText.setCharacterSize(50);
-    rollText.setFillColor(Color::White);
-    rollText.setPosition(-9700, -10025);
-    turnText.setFont(font);
-    turnText.setCharacterSize(50);
-    turnText.setFillColor(Color::White);
-    turnText.setPosition(-10495, -10025);
-    turnText.setString("Move Player " + std::to_string(player + 1));
-
-    View playAreaView(currentActiveUnit->getPosition(), Vector2f(10 * c_tileWidthf, 10 * c_tileWidthf));
-    playAreaView.setViewport(FloatRect(0, 0, 1, 0.9));
-    View diceView(Vector2f(-5600, -4600), Vector2f(15 * c_tileWidthf, 15 * c_tileWidthf));
-    diceView.setViewport(FloatRect(0, 0, 1, 1));
-    View hudView(Vector2f(-10000, -10000), Vector2f(10 * c_tileWidthf, 1 * c_tileWidthf));
-    hudView.setViewport(FloatRect(0, 0.9, 1, 0.1));
+    sf::View playAreaView{currentActiveUnit->getPosition(), sf::Vector2f{10 * c_tileWidthf, 10 * c_tileWidthf}};
+    playAreaView.setViewport(sf::FloatRect{0, 0, 1, 0.9});
+    sf::View diceView{sf::Vector2f{-5600, -4600}, sf::Vector2f{15 * c_tileWidthf, 15 * c_tileWidthf}};
+    diceView.setViewport(sf::FloatRect{0, 0, 1, 1});
+    sf::View hudView{sf::Vector2f{-10000, -10000}, sf::Vector2f{10 * c_tileWidthf, 1 * c_tileWidthf}};
+    hudView.setViewport(sf::FloatRect{0, 0.9, 1, 0.1});
+    sf::View attackMenuView{};
 
     while (window.isOpen())
     {
-        Event event;
+        sf::Event event;
         while (window.pollEvent(event))
         {
             switch (event.type)
             {
-            case Event::Closed:
+            case sf::Event::Closed:
             {
                 window.close();
             }
             break;
-            case Event::Resized:
+            case sf::Event::Resized:
             {
             }
             break;
-            case Event::KeyPressed:
+            case sf::Event::KeyPressed:
             {
                 switch (event.key.code)
                 {
-                case Keyboard::Escape:
+                case sf::Keyboard::Escape:
                 {
                     window.close();
                 }
                 break;
-                case Keyboard::R:
+                case sf::Keyboard::R:
                 {
                     dungeon.reset();
-                    for (auto &&player : players)
+                    for (auto &player : players)
                     {
                         player.reset();
                         dungeon.getTileAtPosition(player.getPosition()).toggleUnit();
@@ -161,7 +122,7 @@ int main()
                     turnText.setString("Move Player " + std::to_string(player + 1));
                 }
                 break;
-                case Keyboard::W:
+                case sf::Keyboard::W:
                 {
                     if (playAreaView.getCenter().y > (3 * c_tileWidthf))
                     {
@@ -169,7 +130,7 @@ int main()
                     }
                 }
                 break;
-                case Keyboard::A:
+                case sf::Keyboard::A:
                 {
                     if (playAreaView.getCenter().x > (3 * c_tileWidthf))
                     {
@@ -177,7 +138,7 @@ int main()
                     }
                 }
                 break;
-                case Keyboard::S:
+                case sf::Keyboard::S:
                 {
                     if (playAreaView.getCenter().y < ((dungeonHeight - 3) * c_tileWidthf))
                     {
@@ -185,7 +146,7 @@ int main()
                     }
                 }
                 break;
-                case Keyboard::D:
+                case sf::Keyboard::D:
                 {
                     if (playAreaView.getCenter().x < ((dungeonWidth - 3) * c_tileWidthf))
                     {
@@ -193,7 +154,7 @@ int main()
                     }
                 }
                 break;
-                case Keyboard::Space:
+                case sf::Keyboard::Space:
                 {
                     if (++player >= numberOfPlayers)
                     {
@@ -215,16 +176,16 @@ int main()
                 }
             }
             break;
-            case Event::MouseButtonPressed:
+            case sf::Event::MouseButtonPressed:
             {
                 switch (event.mouseButton.button)
                 {
-                case Mouse::Left:
+                case sf::Mouse::Left:
                 {
                     if (inCombat)
                     {
-                        Vector2f clickPosition = window.mapPixelToCoords(
-                            Vector2i(event.mouseButton.x, event.mouseButton.y), diceView);
+                        sf::Vector2f clickPosition = window.mapPixelToCoords(
+                            sf::Vector2i(event.mouseButton.x, event.mouseButton.y), diceView);
 
                         if (d6.getGlobalBounds().contains(clickPosition))
                         {
@@ -250,8 +211,8 @@ int main()
                     }
                     else
                     {
-                        Vector2f clickPosition = window.mapPixelToCoords(
-                            Vector2i(event.mouseButton.x, event.mouseButton.y), playAreaView);
+                        sf::Vector2f clickPosition = window.mapPixelToCoords(
+                            sf::Vector2i(event.mouseButton.x, event.mouseButton.y), playAreaView);
 
                         int xCoord{(int)(clickPosition.x / c_tileWidthi)};
                         int yCoord{(int)(clickPosition.y / c_tileWidthi)};
@@ -288,7 +249,7 @@ int main()
                     }
                 }
                 break;
-                case Mouse::Right:
+                case sf::Mouse::Right:
                 {
                     if (isRolling)
                     {
@@ -306,11 +267,11 @@ int main()
                 }
             }
             break;
-            case Event::MouseButtonReleased:
+            case sf::Event::MouseButtonReleased:
             {
                 switch (event.mouseButton.button)
                 {
-                case Mouse::Left:
+                case sf::Mouse::Left:
                 {
                     if (isRolling)
                     {
@@ -349,17 +310,17 @@ int main()
                     isRolling = false;
                 }
                 break;
-                case Mouse::Right:
+                case sf::Mouse::Right:
                 {
                 }
                 break;
                 }
             }
             break;
-            case Event::MouseWheelScrolled:
+            case sf::Event::MouseWheelScrolled:
             {
                 float viewX = playAreaView.getSize().x;
-                Vector2f playAreaCenter = playAreaView.getCenter();
+                sf::Vector2f playAreaCenter = playAreaView.getCenter();
 
                 if (event.mouseWheelScroll.delta < 0 && viewX < 24 * c_tileWidthf)
                 {
@@ -425,10 +386,10 @@ int main()
             {
                 enemy.second.setTexture(enemyTexture);
             }
-            
+
             window.draw(enemy.second);
         }
-        for (int i = 0; i < players.size(); i++)
+        for (int i = 0; i < players.size(); ++i)
         {
             if (players[i].isAlive())
             {
@@ -452,7 +413,7 @@ int main()
             window.setView(diceView);
             if (isRolling)
             {
-                heldDie->setPosition(window.mapPixelToCoords(Mouse::getPosition(window)) - c_vectorf5050);
+                heldDie->setPosition(window.mapPixelToCoords(sf::Mouse::getPosition(window)) - c_vectorf5050);
             }
 
             window.draw(d6);

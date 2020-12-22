@@ -7,8 +7,8 @@
 class PRNG
 {
 private:
-    uint64_t s[2];
-    uint64_t x; /* The state can be seeded with any value. */
+    uint64_t m_seed128[2];
+    uint64_t m_seed64;                                           /* The state can be seeded with any value. */
     static inline uint64_t PRNG::rotl64(const uint64_t x, int k) // rotate left by k bits
     {
         return (x << k) | (x >> (64 - k));

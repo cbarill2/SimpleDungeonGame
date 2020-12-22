@@ -1,7 +1,5 @@
 #include "Unit.h"
 
-using namespace sf;
-
 const int c_xpToLevel[5] = {5, 10, 25, 50, 100};
 
 Unit::Unit() : Sprite()
@@ -18,7 +16,7 @@ Unit::Unit() : Sprite()
     m_xpValue = 0;
 }
 
-Unit::Unit(int x, int y, Texture &texture, bool isPlayer) : Sprite(texture, IntRect(0, 0, 100, 100))
+Unit::Unit(int x, int y, sf::Texture &texture, bool isPlayer) : Sprite(texture, sf::IntRect(0, 0, 100, 100))
 {
     setMaxStats();
     setStatsToMax();
@@ -53,7 +51,7 @@ void Unit::setStatsToMax()
 
 void Unit::setPosition(int x, int y, int speed)
 {
-    Sprite::setPosition(Vector2f(x * 100.0f, y * 100.0f));
+    Sprite::setPosition(sf::Vector2f(x * 100.0f, y * 100.0f));
     m_coords.x = x;
     m_coords.y = y;
     m_currentSpeed = speed;
@@ -66,14 +64,14 @@ void Unit::startTurn()
         m_currentSpeed = m_maxSpeed;
         m_currentAttackPoints = m_maxAttackPoints;
         m_selected = true;
-        setTextureRect(IntRect(0, 100, 100, 100));
+        setTextureRect(sf::IntRect(0, 100, 100, 100));
     }
 }
 
 void Unit::endTurn()
 {
     m_selected = false;
-    setTextureRect(IntRect(0, 0, 100, 100));
+    setTextureRect(sf::IntRect(0, 0, 100, 100));
 }
 
 bool Unit::attack(Unit &target, int attackRoll)
@@ -86,7 +84,7 @@ bool Unit::attack(Unit &target, int attackRoll)
         m_experiencePoints += target.takeDamage();
     }
 
-    if (m_experiencePoints >= c_xpToLevel[m_level-1])
+    if (m_experiencePoints >= c_xpToLevel[m_level - 1])
     {
         // todo: gain level if enough XP gained
     }

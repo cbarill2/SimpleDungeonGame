@@ -1,12 +1,10 @@
 #include "Dice.h"
 
-using namespace sf;
-
 Dice::Dice() : Sprite()
 {
 }
 
-Dice::Dice(int numberOfSides, Texture &texture, Vector2f position) : Sprite(texture)
+Dice::Dice(int numberOfSides, sf::Texture &texture, sf::IntRect textureRect, sf::Vector2f position) : Sprite(texture, textureRect)
 {
     m_numberOfSides = numberOfSides;
     prng = PRNG();
@@ -18,7 +16,7 @@ Dice::Dice(int numberOfSides, Texture &texture, Vector2f position) : Sprite(text
     }
     prng.seed64(seed64); //probably not good to always use the same starting seed...
     prng.seed128(prng.nextSplitMix64(), prng.nextSplitMix64());
-    m_homePosition = Vector2f(position);
+    m_homePosition = sf::Vector2f(position);
     setPosition(position);
 }
 

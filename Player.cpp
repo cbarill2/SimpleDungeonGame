@@ -1,18 +1,13 @@
 #include "Player.h"
 
-using namespace sf;
-
 Player::Player() : Unit()
 {
-    
 }
 
-Player::Player(int x, int y, Texture & texture) : Unit(x, y, texture, true)
+Player::Player(int x, int y, sf::Texture &texture) : Unit(x, y, texture, true)
 {
-    
 }
 
 Player::~Player()
 {
-
 }

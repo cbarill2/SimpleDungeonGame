@@ -1,8 +1,7 @@
 #include "Dungeon.h"
 
 using namespace sf;
-
-Dungeon::Dungeon(int width, int height, Texture &texture, Texture &enemyTexture)
+Dungeon::Dungeon(int width, int height, sf::Texture &texture, sf::Texture &enemyTexture)
 {
     m_width = width;
     m_height = height;
@@ -20,11 +19,11 @@ Dungeon::~Dungeon()
     delete[] m_tiles, m_enemies;
 }
 
-void Dungeon::draw(RenderWindow *window)
+void Dungeon::draw(sf::RenderWindow *window)
 {
-    for (const auto &indexTilePair : m_movableTiles)
+    for (const auto &indexSpeedPair : m_movableTiles)
     {
-        m_tiles[indexTilePair.first].setFillColor(Color::Cyan);
+        m_tiles[indexSpeedPair.first].setFillColor(sf::Color::Cyan);
     }
 
     for (int i = 0; i < m_numberOfTiles; ++i)
@@ -32,13 +31,13 @@ void Dungeon::draw(RenderWindow *window)
         window->draw(m_tiles[i]);
     }
 
-    for (const auto &indexTilePair : m_movableTiles)
+    for (const auto &indexSpeedPair : m_movableTiles)
     {
-        m_tiles[indexTilePair.first].setFillColor(Color::White);
+        m_tiles[indexSpeedPair.first].setFillColor(sf::Color::White);
     }
 }
 
-bool Dungeon::buildMovableTilesMap(Vector2f playerPosition, int playerSpeed)
+bool Dungeon::buildMovableTilesMap(sf::Vector2f playerPosition, int playerSpeed)
 {
     int tileIndex;
 
@@ -46,10 +45,10 @@ bool Dungeon::buildMovableTilesMap(Vector2f playerPosition, int playerSpeed)
     {
         if (playerSpeed > 0)
         {
-            buildMovableTilesMap(Vector2f(playerPosition.x, playerPosition.y + 100), playerSpeed - 1);
-            buildMovableTilesMap(Vector2f(playerPosition.x - 100, playerPosition.y), playerSpeed - 1);
-            buildMovableTilesMap(Vector2f(playerPosition.x + 100, playerPosition.y), playerSpeed - 1);
-            buildMovableTilesMap(Vector2f(playerPosition.x, playerPosition.y - 100), playerSpeed - 1);
+            buildMovableTilesMap(sf::Vector2f{playerPosition.x, playerPosition.y + c_tileHeightf}, playerSpeed - 1);
+            buildMovableTilesMap(sf::Vector2f{playerPosition.x - c_tileWidthf, playerPosition.y}, playerSpeed - 1);
+            buildMovableTilesMap(sf::Vector2f{playerPosition.x + c_tileWidthf, playerPosition.y}, playerSpeed - 1);
+            buildMovableTilesMap(sf::Vector2f{playerPosition.x, playerPosition.y - c_tileHeightf}, playerSpeed - 1);
         }
         if (!m_tiles[tileIndex].hasUnit())
         {
@@ -120,7 +119,7 @@ bool Dungeon::buildAttackableTilesMap(Vector2f playerPosition, int range)
     return !m_attackableEnemies.empty();
 }
 
-bool Dungeon::isTileAtPosition(Vector2f &position)
+bool Dungeon::isTileAtPosition(sf::Vector2f &position)
 {
     int tileIndex;
     if (isValidTile(position, tileIndex))
@@ -131,7 +130,7 @@ bool Dungeon::isTileAtPosition(Vector2f &position)
     return false;
 }
 
-bool Dungeon::tileHasUnit(Vector2f position)
+bool Dungeon::tileHasUnit(sf::Vector2f position)
 {
     int tileIndex;
     if (isValidTile(position, tileIndex))
@@ -141,19 +140,19 @@ bool Dungeon::tileHasUnit(Vector2f position)
     return false;
 }
 
-Tile &Dungeon::getTileAtPosition(Vector2f position)
+Tile &Dungeon::getTileAtPosition(sf::Vector2f position)
 {
-    int tileIndex = ((int)(position.y / 100) * m_width) + (int)(position.x / 100);
+    int tileIndex = ((int)(position.y / c_tileHeightf) * m_width) + (int)(position.x / c_tileWidthf);
     return m_tiles[tileIndex];
 }
 
-bool Dungeon::isValidTile(Vector2f position, int &tileIndex)
+bool Dungeon::isValidTile(sf::Vector2f position, int &tileIndex)
 {
-    if (position.x < 0 || position.x >= m_width * c_tileWidth || position.y < 0 || position.y >= m_height * c_tileHeight)
+    if (position.x < 0 || position.x >= m_width * c_tileWidthf || position.y < 0 || position.y >= m_height * c_tileHeightf)
     {
         return false;
     }
-    tileIndex = ((int)(position.y / c_tileHeight) * m_width) + (int)(position.x / c_tileWidth);
+    tileIndex = ((int)(position.y / c_tileHeightf) * m_width) + (int)(position.x / c_tileWidthf);
     return (tileIndex >= 0 && tileIndex < m_numberOfTiles);
 }
 
@@ -176,12 +175,12 @@ void Dungeon::reset()
 void Dungeon::generateProcedurally()
 {
     int *heights{new int[m_width]{0}};
-    Vector2f tileSize(c_tileWidth, c_tileHeight);
+    sf::Vector2f tileSize{c_tileWidthf, c_tileHeightf};
     PRNG prng{};
     prng.seed64(1);
     prng.seed128(prng.nextSplitMix64(), prng.nextSplitMix64());
-    int roomWidth, roomHeight, tile;
-    int currentWidth = 0, currentHeight = 0, minHeight = m_height;
+    int roomWidth, roomHeight, tileTextureIndex;
+    int currentWidth{0}, currentHeight{0}, minHeight{m_height};
     while (currentHeight < m_height - 1)
     {
         currentWidth = 0;
@@ -203,7 +202,7 @@ void Dungeon::generateProcedurally()
             }
 
             minHeight = currentHeight;
-            for (int x = currentWidth; x < xEdge; x++)
+            for (int x = currentWidth; x < xEdge; ++x)
             {
                 if (heights[x] < minHeight)
                 {
@@ -213,9 +212,9 @@ void Dungeon::generateProcedurally()
 
             int numberOfDoors = prng.random_roll(4);
 
-            for (int y = minHeight; y < yEdge; y++)
+            for (int y = minHeight; y < yEdge; ++y)
             {
-                for (int x = currentWidth; x < xEdge; x++)
+                for (int x = currentWidth; x < xEdge; ++x)
                 {
                     int tileIndex = (y * m_width) + x;
 
@@ -231,37 +230,37 @@ void Dungeon::generateProcedurally()
                             && ((xEdge - x) == roomWidth / 2 || (yEdge - y) == roomHeight / 2)) //try to center doors
                         {
                             // door tile
-                            tile = 2;
-                            numberOfDoors--;
+                            tileTextureIndex = 2;
+                            --numberOfDoors;
                         }
                         else if (x == 1 && y == 0)
                         {
                             // dungeon entrance door
-                            tile = 2;
+                            tileTextureIndex = 2;
                         }
                         else
                         {
                             // wall tile
-                            tile = 9;
+                            tileTextureIndex = 9;
                         }
                     }
                     else
                     {
                         //floor tile
-                        tile = 0;
+                        tileTextureIndex = 0;
                     }
 
-                    m_tiles[tileIndex] = Tile(tileSize, tile % 2, tile == 2);
+                    m_tiles[tileIndex] = Tile{tileSize, tileTextureIndex % 2 == 1, tileTextureIndex == 2};
                     m_tiles[tileIndex].setTexture(m_texture);
                     m_tiles[tileIndex].setTextureRect(
-                        IntRect(
-                            c_tileWidth * (tile % c_tileMapWidth),
-                            c_tileHeight * (tile / c_tileMapWidth),
-                            c_tileWidth,
-                            c_tileHeight));
+                        sf::IntRect{
+                            c_tileWidthi * (tileTextureIndex % c_tileMapWidth),
+                            c_tileHeighti * (tileTextureIndex / c_tileMapWidth),
+                            c_tileWidthi,
+                            c_tileHeighti});
                     m_tiles[tileIndex].setPosition(
-                        100.0f * (tileIndex % m_width),
-                        100.0f * (tileIndex / m_width),
+                        c_tileWidthf * (tileIndex % m_width),
+                        c_tileHeightf * (tileIndex / m_width),
                         (tileIndex % m_width),
                         (tileIndex / m_width));
 
@@ -285,11 +284,11 @@ void Dungeon::populateWithEnemies()
     m_numberOfEnemies = prng.random_roll(4, 18);
 
     int remainingEnemies = m_numberOfEnemies;
-    for (int i = m_width + 5; i < m_numberOfTiles && remainingEnemies > 0; i++)
+    for (int i = m_width + 5; i < m_numberOfTiles && remainingEnemies > 0; ++i)
     {
         if (prng.random_roll(50) == 1 && !m_tiles[i].hasCollision() && !m_tiles[i].hasUnit())
         {
-            m_enemies[i] = Enemy(m_tiles[i].getXCoord(), m_tiles[i].getYCoord(), *m_enemyTexture);
+            m_enemies[i] = Enemy{m_tiles[i].getXCoord(), m_tiles[i].getYCoord(), *m_enemyTexture};
             m_tiles[i].toggleUnit();
             --remainingEnemies;
         }
