@@ -1,8 +1,5 @@
 #include "PRNG.h"
 
-PRNG::PRNG() {}
-PRNG::~PRNG() {}
-
 void PRNG::seed64(uint64_t seed)
 {
     m_seed64 = seed;

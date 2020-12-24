@@ -13,9 +13,9 @@ private:
     PRNG prng;
 
 public:
-    Dice();
+    Dice() : Sprite{} {}
     Dice(int numberOfSides, sf::Texture &texture, sf::IntRect textureRect, sf::Vector2f position);
-    ~Dice();
+    ~Dice() {}
     int roll();
     void resetPosition();
     std::string toString();

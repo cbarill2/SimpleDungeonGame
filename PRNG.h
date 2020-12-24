@@ -15,8 +15,8 @@ private:
     }
 
 public:
-    PRNG();
-    ~PRNG();
+    PRNG() {}
+    ~PRNG() {}
     void seed64(uint64_t seed);
     void seed128(uint64_t seedLow, uint64_t seedHigh);
     uint64_t nextXorShift128Plus();

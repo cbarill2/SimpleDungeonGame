@@ -1,37 +1,26 @@
 #include "Unit.h"
 
-const int c_xpToLevel[5] = {5, 10, 25, 50, 100};
-
-Unit::Unit() : Sprite()
+Unit::Unit()
+    : Sprite{}, m_startingCoords{0, 0}, m_experiencePoints{0}, m_level{1}, m_hasTarget{false},
+      m_player{false}, m_selected{false}, m_alive{true}, m_xpValue{0}, m_range{1}
 {
     setMaxStats();
     setStatsToMax();
-    m_startingCoords = {0, 0};
     setPosition(m_startingCoords.x, m_startingCoords.y, m_currentSpeed);
-    m_experiencePoints = 0;
-    m_level = 1;
-    m_player = false;
-    m_selected = false;
-    m_alive = true;
-    m_xpValue = 0;
 }
 
-Unit::Unit(int x, int y, sf::Texture &texture, bool isPlayer) : Sprite(texture, sf::IntRect(0, 0, 100, 100))
+Unit::Unit(int x, int y, sf::Texture &activeTexture, sf::Texture &inactiveTexture, bool isPlayer)
+    : Sprite{}, m_startingCoords{x, y}, m_experiencePoints{0}, m_level{1}, m_player{isPlayer},
+      m_selected{false}, m_alive{true}, m_xpValue{(m_player) ? 0 : 1}, m_range{4},
+      m_hasTarget{false}
 {
+    m_activeTexture = &activeTexture;
+    m_inactiveTexture = &inactiveTexture;
     setMaxStats();
     setStatsToMax();
-    m_startingCoords = {x, y};
+    setTexture(inactiveTexture);
+    setTextureRect(sf::IntRect{0, 0, 100, 100});
     setPosition(x, y, m_currentSpeed);
-    m_experiencePoints = 0;
-    m_level = 1;
-    m_player = isPlayer;
-    m_selected = false;
-    m_alive = true;
-    m_xpValue = (m_player) ? 0 : 1;
-}
-
-Unit::~Unit()
-{
 }
 
 void Unit::setMaxStats()
@@ -51,7 +40,7 @@ void Unit::setStatsToMax()
 
 void Unit::setPosition(int x, int y, int speed)
 {
-    Sprite::setPosition(sf::Vector2f(x * 100.0f, y * 100.0f));
+    Sprite::setPosition(sf::Vector2f{x * 100.0f, y * 100.0f});
     m_coords.x = x;
     m_coords.y = y;
     m_currentSpeed = speed;
@@ -59,37 +48,43 @@ void Unit::setPosition(int x, int y, int speed)
 
 void Unit::startTurn()
 {
-    if (m_alive)
-    {
-        m_currentSpeed = m_maxSpeed;
-        m_currentAttackPoints = m_maxAttackPoints;
-        m_selected = true;
-        setTextureRect(sf::IntRect(0, 100, 100, 100));
-    }
+    // if (m_alive)
+    // {
+    m_currentSpeed = m_maxSpeed;
+    m_currentAttackPoints = m_maxAttackPoints;
+    m_selected = true;
+    clearTarget();
+    setTexture(*m_activeTexture);
+    setTextureRect(sf::IntRect{0, 100, 100, 100});
+    // }
 }
 
 void Unit::endTurn()
 {
     m_selected = false;
-    setTextureRect(sf::IntRect(0, 0, 100, 100));
+    clearTarget();
+    setTexture(*m_inactiveTexture);
+    setTextureRect(sf::IntRect{0, 0, 100, 100});
 }
 
-bool Unit::attack(Unit &target, int attackRoll)
+AttackResult Unit::attack(int attackRoll)
 {
     --m_currentAttackPoints;
-    bool attackHit{false};
     if (attackRoll > m_defense)
     {
-        attackHit = true;
-        m_experiencePoints += target.takeDamage();
+        int xpReceived = m_target->takeDamage();
+        if (xpReceived > 0)
+        {
+            m_experiencePoints += xpReceived;
+            if (m_experiencePoints >= c_xpToLevel[m_level - 1])
+            {
+                // todo: gain level if enough XP gained
+            }
+            return AttackResult::Kill;
+        }
+        return AttackResult::Hit;
     }
-
-    if (m_experiencePoints >= c_xpToLevel[m_level - 1])
-    {
-        // todo: gain level if enough XP gained
-    }
-
-    return attackHit;
+    return AttackResult::Miss;
 }
 
 int Unit::takeDamage()
@@ -106,6 +101,8 @@ void Unit::die()
 {
     setTextureRect(m_deathTextureRect);
     m_alive = false;
+    m_hasTarget = false;
+    m_target = nullptr;
 }
 
 void Unit::reset()
@@ -116,4 +113,16 @@ void Unit::reset()
     m_level = 1;
     setStatsToMax();
     setPosition(m_startingCoords.x, m_startingCoords.y, m_maxSpeed);
+}
+
+void Unit::setTarget(Unit *target)
+{
+    m_target = target;
+    m_hasTarget = true;
+}
+
+void Unit::clearTarget()
+{
+    m_target = nullptr;
+    m_hasTarget = false;
 }

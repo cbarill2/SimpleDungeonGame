@@ -1,5 +1,7 @@
 #include <SFML/Graphics.hpp>
 
+#pragma once
+
 class Tile : public sf::RectangleShape
 {
 private:
@@ -8,10 +10,10 @@ private:
     bool m_hasUnit, m_hasCollision, m_isDoor;
 
 public:
-    Tile();
-    ~Tile();
-
-    Tile(sf::Vector2f size, bool hasCollision, bool isDoor);
+    Tile() : m_hasUnit{false}, m_isDoor{false} {}
+    Tile(sf::Vector2f size, bool hasCollision, bool isDoor)
+    : RectangleShape{size}, m_hasUnit{false}, m_hasCollision{hasCollision}, m_isDoor{isDoor} {}
+    ~Tile() {}
 
     void setPosition(float x, float y, int xCoord, int yCoord);
     int getX() { return getPosition().x; }

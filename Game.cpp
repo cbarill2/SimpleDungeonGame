@@ -1,434 +1,381 @@
-#include <SFML/Graphics.hpp>
-#include "ResourceLoader.cpp"
-#include "Dungeon.h"
-#include "Player.h"
-#include "Enemy.h"
-#include "Dice.h"
-#include "PRNG.h"
+#include "Game.h"
 
-int main()
+void Game::initialize()
 {
-    int dungeonWidth{30}, dungeonHeight{30}, numberOfPlayers{1};
+    m_numberOfPlayers = 4; // TODO: make this selectable in game
 
-#if DEBUG
-    PRNG prng{};
-    prng.seed64(0);
-    prng.seed128(prng.nextSplitMix64(), prng.nextSplitMix64());
-    dungeonWidth = prng.random_roll(41, 20);
-    dungeonHeight = prng.random_roll(41, 20);
-    numberOfPlayers = 4;
-#endif
-
-    const float c_d6X{-4950.0f}, c_d6Y{-4950.0f};
-    const float c_d8X{-4950.0f}, c_d8Y{-4800.0f};
-    const float c_d10X{-4950.0f}, c_d10Y{-4650.0f};
-    const float c_d12X{-4950.0f}, c_d12Y{-4500.0f};
-    const float c_tileWidthf{100.0f};
-    const int c_tileWidthi{100};
-    const sf::Vector2f c_vectorf5050{50.0f, 50.0f};
-
-    int player{0}, playerRoll{0}, targetIndex{0};
-    bool enemiesInRange{false}, playerCanMove{false}, inCombat{false}, isRolling{false}, attackMenuIsOpen{false};
-
-    sf::RenderWindow window{sf::VideoMode{1024, 768}, "Simple Dungeon Game"};
-
-    sf::Font font;
-    sf::Texture dungeonTexture, playerTexture, enemyTexture, fadedPlayerTexture, attackableEnemyTexture, diceTexture;
-    ResourceLoader::LoadResources(dungeonTexture, playerTexture, fadedPlayerTexture, enemyTexture, attackableEnemyTexture, diceTexture, font);
-
-    sf::Text rollText, turnText;
-    rollText.setFont(font);
-    rollText.setCharacterSize(50);
-    rollText.setFillColor(sf::Color::White);
-    rollText.setPosition(-9700, -10025);
-    turnText.setFont(font);
-    turnText.setCharacterSize(50);
-    turnText.setFillColor(sf::Color::White);
-    turnText.setPosition(-10495, -10025);
-    turnText.setString("Move Player " + std::to_string(player + 1));
-
-    Dice d6{6, diceTexture, sf::IntRect{0 * c_tileWidthi, 0, c_tileWidthi, c_tileWidthi}, sf::Vector2f{c_d6X, c_d6Y}},
-        d8{8, diceTexture, sf::IntRect{1 * c_tileWidthi, 0, c_tileWidthi, c_tileWidthi}, sf::Vector2f{c_d8X, c_d8Y}},
-        d10{10, diceTexture, sf::IntRect{2 * c_tileWidthi, 0, c_tileWidthi, c_tileWidthi}, sf::Vector2f{c_d10X, c_d10Y}},
-        d12{12, diceTexture, sf::IntRect{3 * c_tileWidthi, 0, c_tileWidthi, c_tileWidthi}, sf::Vector2f{c_d12X, c_d12Y}},
-        *heldDie{nullptr};
-
-    Dungeon dungeon{dungeonWidth, dungeonHeight, dungeonTexture, enemyTexture};
-    std::map<int, Enemy> enemies = dungeon.getEnemies();
-    
-    std::vector<Unit> players;
-    for (int i = 0; i < numberOfPlayers; ++i)
+    sf::Image image = ResourceLoader::LoadFromResource<sf::Image>("player");
+    m_playerTexture.loadFromImage(image);
+    for (uint32_t i = 0; i < c_tileWidthi; ++i)
     {
-        players.push_back(Player{1, 0, playerTexture});
+        for (uint32_t j = 0; j < c_tileWidthi; ++j)
+        {
+            sf::Color c = image.getPixel(i, j);
+            c.a *= 0.65;
+            image.setPixel(i, j, c);
+        }
+    }
+    m_fadedPlayerTexture.loadFromImage(image);
+
+    for (int i = 0; i < m_numberOfPlayers; ++i)
+    {
+        m_players.push_back(Player{1, 0, m_playerTexture, m_fadedPlayerTexture});
     }
 
-    Unit *currentActiveUnit = &players[player];
-    dungeon.getTileAtPosition(currentActiveUnit->getPosition()).toggleUnit();
-    currentActiveUnit->startTurn();
-    playerCanMove = dungeon.buildMovableTilesMap(currentActiveUnit->getPosition(), currentActiveUnit->getSpeed());
-    enemiesInRange = dungeon.buildAttackableTilesMap(currentActiveUnit->getPosition());
+    image = ResourceLoader::LoadFromResource<sf::Image>("tiles");
+    m_dungeonTexture.loadFromImage(image);
 
-    sf::View playAreaView{currentActiveUnit->getPosition(), sf::Vector2f{10 * c_tileWidthf, 10 * c_tileWidthf}};
-    playAreaView.setViewport(sf::FloatRect{0, 0, 1, 0.9});
-    sf::View diceView{sf::Vector2f{-5600, -4600}, sf::Vector2f{15 * c_tileWidthf, 15 * c_tileWidthf}};
-    diceView.setViewport(sf::FloatRect{0, 0, 1, 1});
-    sf::View hudView{sf::Vector2f{-10000, -10000}, sf::Vector2f{10 * c_tileWidthf, 1 * c_tileWidthf}};
-    hudView.setViewport(sf::FloatRect{0, 0.9, 1, 0.1});
-    sf::View attackMenuView{};
-
-    while (window.isOpen())
+    image = ResourceLoader::LoadFromResource<sf::Image>("enemy");
+    m_enemyTexture.loadFromImage(image);
+    for (uint32_t i = 0; i < c_tileWidthi; ++i)
     {
-        sf::Event event;
-        while (window.pollEvent(event))
+        for (uint32_t j = 0; j < c_tileWidthi; ++j)
         {
-            switch (event.type)
+            sf::Color c = image.getPixel(i, j);
+            if (c.a <= 10)
             {
-            case sf::Event::Closed:
-            {
-                window.close();
+                image.setPixel(i, j, sf::Color::Red);
             }
-            break;
-            case sf::Event::Resized:
-            {
-            }
-            break;
-            case sf::Event::KeyPressed:
-            {
-                switch (event.key.code)
-                {
-                case sf::Keyboard::Escape:
-                {
-                    window.close();
-                }
-                break;
-                case sf::Keyboard::R:
-                {
-                    dungeon.reset();
-                    for (auto &player : players)
-                    {
-                        player.reset();
-                        dungeon.getTileAtPosition(player.getPosition()).toggleUnit();
-                    }
-                    enemies = dungeon.getEnemies();
-                    player = 0;
-                    currentActiveUnit = &players[player];
-                    currentActiveUnit->startTurn();
-                    dungeon.clearMovableTiles();
-                    playerCanMove = dungeon.buildMovableTilesMap(currentActiveUnit->getPosition(), currentActiveUnit->getSpeed());
-                    enemiesInRange = dungeon.buildAttackableTilesMap(currentActiveUnit->getPosition());
-                    playAreaView.setCenter(currentActiveUnit->getPosition());
-                    inCombat = false;
-                    isRolling = false;
-                    turnText.setString("Move Player " + std::to_string(player + 1));
-                }
-                break;
-                case sf::Keyboard::W:
-                {
-                    if (playAreaView.getCenter().y > (3 * c_tileWidthf))
-                    {
-                        playAreaView.move(0.0f, -c_tileWidthf);
-                    }
-                }
-                break;
-                case sf::Keyboard::A:
-                {
-                    if (playAreaView.getCenter().x > (3 * c_tileWidthf))
-                    {
-                        playAreaView.move(-c_tileWidthf, 0.0f);
-                    }
-                }
-                break;
-                case sf::Keyboard::S:
-                {
-                    if (playAreaView.getCenter().y < ((dungeonHeight - 3) * c_tileWidthf))
-                    {
-                        playAreaView.move(0.0f, c_tileWidthf);
-                    }
-                }
-                break;
-                case sf::Keyboard::D:
-                {
-                    if (playAreaView.getCenter().x < ((dungeonWidth - 3) * c_tileWidthf))
-                    {
-                        playAreaView.move(c_tileWidthf, 0.0f);
-                    }
-                }
-                break;
-                case sf::Keyboard::Space:
-                {
-                    if (++player >= numberOfPlayers)
-                    {
-                        player = 0;
-                    }
+        }
+    }
+    m_attackableEnemyTexture.loadFromImage(image);
 
-                    currentActiveUnit->endTurn();
-                    currentActiveUnit = &players[player];
-                    currentActiveUnit->startTurn();
-                    dungeon.clearMovableTiles();
-                    playerCanMove = dungeon.buildMovableTilesMap(currentActiveUnit->getPosition(), currentActiveUnit->getSpeed());
-                    enemiesInRange = dungeon.buildAttackableTilesMap(currentActiveUnit->getPosition());
-                    playAreaView.setCenter(currentActiveUnit->getPosition());
-                    inCombat = false;
-                    isRolling = false;
-                    turnText.setString("Move Player " + std::to_string(player + 1));
-                }
-                break;
-                }
-            }
-            break;
-            case sf::Event::MouseButtonPressed:
-            {
-                switch (event.mouseButton.button)
-                {
-                case sf::Mouse::Left:
-                {
-                    if (inCombat)
-                    {
-                        sf::Vector2f clickPosition = window.mapPixelToCoords(
-                            sf::Vector2i(event.mouseButton.x, event.mouseButton.y), diceView);
+    m_prng.seed64(0);
+    m_prng.seed128(m_prng.nextSplitMix64(), m_prng.nextSplitMix64());
 
-                        if (d6.getGlobalBounds().contains(clickPosition))
+    int dungeonWidth{(int)m_prng.random_roll(41, 20)};
+    int dungeonHeight{(int)m_prng.random_roll(41, 20)};
+    m_dungeon.initialize(dungeonWidth, dungeonHeight, m_dungeonTexture, m_enemyTexture);
+
+    m_font = ResourceLoader::LoadFromResource<sf::Font>("font");
+    m_rollText.setFont(m_font);
+    m_rollText.setCharacterSize(50);
+    m_rollText.setFillColor(sf::Color::White);
+    m_rollText.setPosition(-9700, -10025);
+    m_turnText.setFont(m_font);
+    m_turnText.setCharacterSize(50);
+    m_turnText.setFillColor(sf::Color::White);
+    m_turnText.setPosition(-10495, -10025);
+    m_turnText.setString("Move Player " + std::to_string(m_turnIndex + 1));
+
+    image = ResourceLoader::LoadFromResource<sf::Image>("dice");
+    m_diceTexture.loadFromImage(image);
+    m_dice.push_back(Dice{6, m_diceTexture, sf::IntRect{0 * c_tileWidthi, 0, c_tileWidthi, c_tileWidthi}, sf::Vector2f{c_diceX, c_d6Y}});
+    m_dice.push_back(Dice{8, m_diceTexture, sf::IntRect{1 * c_tileWidthi, 0, c_tileWidthi, c_tileWidthi}, sf::Vector2f{c_diceX, c_d8Y}});
+    m_dice.push_back(Dice{10, m_diceTexture, sf::IntRect{2 * c_tileWidthi, 0, c_tileWidthi, c_tileWidthi}, sf::Vector2f{c_diceX, c_d10Y}});
+    m_dice.push_back(Dice{12, m_diceTexture, sf::IntRect{3 * c_tileWidthi, 0, c_tileWidthi, c_tileWidthi}, sf::Vector2f{c_diceX, c_d12Y}});
+
+    m_dungeon.getTileAtPosition(m_players[m_turnIndex].getPosition()).toggleUnit();
+    m_players[m_turnIndex].startTurn();
+    m_dungeon.buildMovableTilesMap(m_players[m_turnIndex].getPosition(), m_players[m_turnIndex].getSpeed());
+    m_dungeon.buildAttackableTilesMap(m_players[m_turnIndex].getPosition());
+
+    m_playAreaView.setCenter(m_players[m_turnIndex].getPosition());
+    m_playAreaView.setSize(sf::Vector2f{c_playViewScale * c_tileWidthf, c_playViewScale * c_tileWidthf});
+    m_playAreaView.setViewport(sf::FloatRect{0, 0, 1, 0.9});
+
+    m_diceView.setCenter(sf::Vector2f{-5600, -4600});
+    m_diceView.setSize(sf::Vector2f{c_diceViewScale * c_tileWidthf, c_diceViewScale * c_tileWidthf});
+    m_diceView.setViewport(sf::FloatRect{0, 0, 1, 1});
+
+    m_hudView.setCenter(sf::Vector2f{-10000, -10000});
+    m_hudView.setSize(sf::Vector2f{10 * c_tileWidthf, 1 * c_tileWidthf});
+    m_hudView.setViewport(sf::FloatRect{0, 0.9, 1, 0.1});
+}
+
+void Game::reset()
+{
+    m_dungeon.reset();
+    for (auto &player : m_players)
+    {
+        player.reset();
+    }
+
+    m_turnIndex = 0;
+    m_dungeon.getTileAtPosition(m_players[m_turnIndex].getPosition()).toggleUnit();
+    m_players[m_turnIndex].startTurn();
+    m_dungeon.clearMovableTiles();
+    m_dungeon.buildMovableTilesMap(m_players[m_turnIndex].getPosition(), m_players[m_turnIndex].getSpeed());
+    m_dungeon.buildAttackableTilesMap(m_players[m_turnIndex].getPosition());
+    m_playAreaView.setCenter(m_players[m_turnIndex].getPosition());
+    m_isRolling = false;
+    m_turnText.setString("Move Player " + std::to_string(m_turnIndex + 1));
+}
+
+void Game::processInput(sf::RenderWindow &window, sf::Event event)
+{
+    switch (event.type)
+    {
+    case sf::Event::KeyPressed:
+    {
+        switch (event.key.code)
+        {
+        case sf::Keyboard::Escape:
+        {
+            m_isRunning = false; //TODO: for now just quit, but should be a menu in future
+        }
+        break;
+        case sf::Keyboard::R:
+        {
+            reset();
+        }
+        break;
+        case sf::Keyboard::W:
+        {
+            if (m_playAreaView.getCenter().y > (3 * c_tileWidthf))
+            {
+                m_playAreaView.move(0.0f, -c_tileWidthf);
+            }
+        }
+        break;
+        case sf::Keyboard::A:
+        {
+            if (m_playAreaView.getCenter().x > (3 * c_tileWidthf))
+            {
+                m_playAreaView.move(-c_tileWidthf, 0.0f);
+            }
+        }
+        break;
+        case sf::Keyboard::S:
+        {
+            if (m_playAreaView.getCenter().y < ((m_dungeon.getHeight() - 3) * c_tileWidthf))
+            {
+                m_playAreaView.move(0.0f, c_tileWidthf);
+            }
+        }
+        break;
+        case sf::Keyboard::D:
+        {
+            if (m_playAreaView.getCenter().x < ((m_dungeon.getWidth() - 3) * c_tileWidthf))
+            {
+                m_playAreaView.move(c_tileWidthf, 0.0f);
+            }
+        }
+        break;
+        case sf::Keyboard::Space:
+        {
+            advanceTurn();
+        }
+        break;
+        }
+    }
+    break;
+    case sf::Event::MouseButtonPressed:
+    {
+        switch (event.mouseButton.button)
+        {
+        case sf::Mouse::Left:
+        {
+            if (m_players[m_turnIndex].isFighting())
+            {
+                sf::Vector2f clickPosition = window.mapPixelToCoords(
+                    sf::Vector2i(event.mouseButton.x, event.mouseButton.y), m_diceView);
+
+                for (auto &die : m_dice)
+                {
+                    if (die.getGlobalBounds().contains(clickPosition))
+                    {
+                        m_heldDie = &die;
+                    }
+                }
+                m_isRolling = true;
+            }
+            else
+            {
+                sf::Vector2f clickPosition = window.mapPixelToCoords(
+                    sf::Vector2i(event.mouseButton.x, event.mouseButton.y), m_playAreaView);
+
+                int xCoord{(int)(clickPosition.x / c_tileWidthi)};
+                int yCoord{(int)(clickPosition.y / c_tileWidthi)};
+
+                if (xCoord >= 0 && xCoord < m_dungeon.getWidth() &&
+                    yCoord >= 0 && yCoord < m_dungeon.getHeight())
+                {
+                    int index, speedLeft;
+
+                    if (m_dungeon.isTileAtPosition(clickPosition) && m_dungeon.isValidTile(clickPosition, index))
+                    {
+                        if (m_dungeon.isMovableTile(index, speedLeft))
                         {
-                            heldDie = &d6;
+                            m_dungeon.getTileAtPosition(m_players[m_turnIndex].getPosition()).toggleUnit();
+                            m_players[m_turnIndex].setPosition(xCoord, yCoord, speedLeft);
+                            m_dungeon.getTileAtPosition(clickPosition).toggleUnit();
+                            m_dungeon.clearMovableTiles();
+
+                            m_dungeon.buildMovableTilesMap(m_players[m_turnIndex].getPosition(), m_players[m_turnIndex].getSpeed());
+                            m_dungeon.buildAttackableTilesMap(m_players[m_turnIndex].getPosition(), 100, m_players[m_turnIndex].getRange());
                         }
-                        else if (d8.getGlobalBounds().contains(clickPosition))
+                        else if (m_players[m_turnIndex].canAttack() && m_dungeon.isAttackableTile(index))
                         {
-                            heldDie = &d8;
-                        }
-                        else if (d10.getGlobalBounds().contains(clickPosition))
-                        {
-                            heldDie = &d10;
-                        }
-                        else if (d12.getGlobalBounds().contains(clickPosition))
-                        {
-                            heldDie = &d12;
+                            m_players[m_turnIndex].setTarget(&m_dungeon.getEnemyOnTile(index));
+                            m_turnText.setString("Roll Attack");
                         }
                         else
                         {
                             break;
                         }
-                        isRolling = true;
-                    }
-                    else
-                    {
-                        sf::Vector2f clickPosition = window.mapPixelToCoords(
-                            sf::Vector2i(event.mouseButton.x, event.mouseButton.y), playAreaView);
-
-                        int xCoord{(int)(clickPosition.x / c_tileWidthi)};
-                        int yCoord{(int)(clickPosition.y / c_tileWidthi)};
-
-                        if (xCoord >= 0 && xCoord < dungeonWidth &&
-                            yCoord >= 0 && yCoord < dungeonHeight)
-                        {
-                            int index, speedLeft;
-
-                            if (dungeon.isTileAtPosition(clickPosition) && dungeon.isValidTile(clickPosition, index))
-                            {
-                                if (dungeon.isMovableTile(index, speedLeft))
-                                {
-                                    dungeon.getTileAtPosition(currentActiveUnit->getPosition()).toggleUnit();
-                                    currentActiveUnit->setPosition(xCoord, yCoord, speedLeft);
-                                    dungeon.getTileAtPosition(clickPosition).toggleUnit();
-                                    dungeon.clearMovableTiles();
-
-                                    playerCanMove = dungeon.buildMovableTilesMap(currentActiveUnit->getPosition(), currentActiveUnit->getSpeed());
-                                    enemiesInRange = dungeon.buildAttackableTilesMap(currentActiveUnit->getPosition());
-                                }
-                                else if (currentActiveUnit->canAttack() && dungeon.isAttackableTile(index))
-                                {
-                                    inCombat = true;
-                                    targetIndex = index;
-                                    turnText.setString("Roll Attack");
-                                }
-                                else
-                                {
-                                    break;
-                                }
-                            }
-                        }
                     }
                 }
-                break;
-                case sf::Mouse::Right:
-                {
-                    if (isRolling)
-                    {
-                        isRolling = false;
-                        heldDie->resetPosition();
-                    }
-                    else if (inCombat)
-                    {
-                        inCombat = false;
-                        turnText.setString("Move Player " + std::to_string(player + 1));
-                    }
-                    
-                }
-                break;
-                }
-            }
-            break;
-            case sf::Event::MouseButtonReleased:
-            {
-                switch (event.mouseButton.button)
-                {
-                case sf::Mouse::Left:
-                {
-                    if (isRolling)
-                    {
-                        playerRoll = heldDie->roll();
-                        rollText.setString(heldDie->toString() + ": " + std::to_string(playerRoll));
-                        heldDie->resetPosition();
-                    }
-
-                    if (inCombat && isRolling)
-                    {
-                        Enemy *targetEnemy = &dungeon.getEnemyOnTile(targetIndex);
-                        if (currentActiveUnit->attack(*targetEnemy, playerRoll))
-                        {
-                            turnText.setString("HIT!");
-                            if (!targetEnemy->isAlive())
-                            {
-                                if (targetEnemy->isPlayer())
-                                {
-                                    //TODO: Implement with AI--player killed
-                                }
-                                else
-                                {
-                                    turnText.setString("Enemy Defeated!");
-                                    enemies = dungeon.getEnemies();
-                                    playerCanMove = dungeon.buildMovableTilesMap(currentActiveUnit->getPosition(), currentActiveUnit->getSpeed());
-                                }
-                            }
-                        }
-                        else
-                        {
-                            turnText.setString("Miss!");
-                        }
-
-                        inCombat = false;
-                    }
-                    isRolling = false;
-                }
-                break;
-                case sf::Mouse::Right:
-                {
-                }
-                break;
-                }
-            }
-            break;
-            case sf::Event::MouseWheelScrolled:
-            {
-                float viewX = playAreaView.getSize().x;
-                sf::Vector2f playAreaCenter = playAreaView.getCenter();
-
-                if (event.mouseWheelScroll.delta < 0 && viewX < 24 * c_tileWidthf)
-                {
-                    playAreaView.zoom(1 + (2 * c_tileWidthf / viewX));
-                }
-                else if (event.mouseWheelScroll.delta > 0 && viewX >= 10 * c_tileWidthf)
-                {
-                    playAreaView.zoom((viewX - (2 * c_tileWidthf)) / viewX);
-                }
-
-                if (playAreaCenter.x < (2 * c_tileWidthf))
-                {
-                    playAreaView.setCenter(0.0f, playAreaCenter.y);
-                }
-                else if (playAreaCenter.x > (dungeonWidth - 1) * c_tileWidthf)
-                {
-                    playAreaView.setCenter(dungeonWidth * c_tileWidthf, playAreaCenter.y);
-                }
-
-                if (playAreaCenter.y < (2 * c_tileWidthf))
-                {
-                    playAreaView.setCenter(playAreaCenter.x, 0.0f);
-                }
-                else if (playAreaCenter.y > (dungeonHeight - 1) * c_tileWidthf)
-                {
-                    playAreaView.setCenter(playAreaCenter.x, dungeonHeight * c_tileWidthf);
-                }
-            }
-            break;
-            }
-
-            if (!playerCanMove && (!enemiesInRange || !currentActiveUnit->canAttack()) && !inCombat)
-            {
-                if (++player >= numberOfPlayers)
-                {
-                    player = 0;
-                }
-
-                currentActiveUnit->endTurn();
-                currentActiveUnit = &players[player];
-                currentActiveUnit->startTurn();
-                dungeon.clearMovableTiles();
-                playerCanMove = dungeon.buildMovableTilesMap(currentActiveUnit->getPosition(), currentActiveUnit->getSpeed());
-                enemiesInRange = dungeon.buildAttackableTilesMap(currentActiveUnit->getPosition());
-                playAreaView.setCenter(currentActiveUnit->getPosition());
-                inCombat = false;
-                isRolling = false;
-                turnText.setString("Move Player " + std::to_string(player + 1));
             }
         }
-
-        window.clear();
-        // draw play area
-        window.setView(playAreaView);
-        dungeon.draw(&window);
-        for (auto &enemy : enemies)
+        break;
+        case sf::Mouse::Right:
         {
-            if (currentActiveUnit->canAttack() && dungeon.isAttackableTile(enemy.first))
+            if (m_isRolling)
             {
-                enemy.second.setTexture(attackableEnemyTexture);
+                m_isRolling = false;
+                m_heldDie->resetPosition();
+            }
+            else if (m_players[m_turnIndex].isFighting())
+            {
+                m_players[m_turnIndex].clearTarget();
+                m_turnText.setString("Move Player " + std::to_string(m_turnIndex + 1));
             }
             else
             {
-                enemy.second.setTexture(enemyTexture);
+                // if attackable tile, open attack menu
+                // if attack menu is open, close attack menu
             }
-
-            window.draw(enemy.second);
         }
-        for (int i = 0; i < players.size(); ++i)
+        break;
+        }
+    }
+    break;
+    case sf::Event::MouseButtonReleased:
+    {
+        switch (event.mouseButton.button)
         {
-            if (players[i].isAlive())
-            {
-                if (&players[i] == currentActiveUnit)
-                {
-                    // players[i].setColor(Color::White);
-                    players[i].setTexture(playerTexture);
-                }
-                else
-                {
-                    // players[i].setColor(Color::Cyan);
-                    players[i].setTexture(fadedPlayerTexture);
-                }
-                window.draw(players[i]);
-            }
-        }
-
-        // draw dice
-        if (inCombat)
+        case sf::Mouse::Left:
         {
-            window.setView(diceView);
-            if (isRolling)
+            if (m_isRolling)
             {
-                heldDie->setPosition(window.mapPixelToCoords(sf::Mouse::getPosition(window)) - c_vectorf5050);
-            }
+                int playerRoll = m_heldDie->roll();
+                m_rollText.setString(m_heldDie->toString() + ": " + std::to_string(playerRoll));
+                m_heldDie->resetPosition();
 
-            window.draw(d6);
-            window.draw(d8);
-            window.draw(d10);
-            window.draw(d12);
+                switch (m_players[m_turnIndex].attack(playerRoll))
+                {
+                case AttackResult::Hit:
+                {
+                    m_turnText.setString("HIT!");
+                }
+                break;
+                case AttackResult::Kill:
+                {
+                    // if (!m_players[m_turnIndex].getTarget().isPlayer())
+                    // {
+                    m_turnText.setString("Enemy Defeated!");
+                    // m_dungeon.buildMovableTilesMap(m_players[m_turnIndex].getPosition(), m_players[m_turnIndex].getSpeed());
+                    // }
+                }
+                break;
+                case AttackResult::Miss:
+                {
+                    m_turnText.setString("Miss!");
+                }
+                break;
+                }
+
+                m_players[m_turnIndex].clearTarget();
+            }
+            m_isRolling = false;
+        }
+        break;
+        case sf::Mouse::Right:
+        {
+        }
+        break;
+        }
+    }
+    break;
+    case sf::Event::MouseWheelScrolled:
+    {
+        float viewX = m_playAreaView.getSize().x;
+        sf::Vector2f playAreaCenter = m_playAreaView.getCenter();
+
+        if (event.mouseWheelScroll.delta < 0 && viewX < 24 * c_tileWidthf)
+        {
+            m_playAreaView.zoom(1 + (2 * c_tileWidthf / viewX));
+        }
+        else if (event.mouseWheelScroll.delta > 0 && viewX >= 10 * c_tileWidthf)
+        {
+            m_playAreaView.zoom((viewX - (2 * c_tileWidthf)) / viewX);
         }
 
-        // draw hud
-        window.setView(hudView);
-        window.draw(rollText);
-        window.draw(turnText);
+        if (playAreaCenter.x < (2 * c_tileWidthf))
+        {
+            m_playAreaView.setCenter(0.0f, playAreaCenter.y);
+        }
+        else if (playAreaCenter.x > (m_dungeon.getWidth() - 1) * c_tileWidthf)
+        {
+            m_playAreaView.setCenter(m_dungeon.getWidth() * c_tileWidthf, playAreaCenter.y);
+        }
 
-        window.display();
+        if (playAreaCenter.y < (2 * c_tileWidthf))
+        {
+            m_playAreaView.setCenter(playAreaCenter.x, 0.0f);
+        }
+        else if (playAreaCenter.y > (m_dungeon.getHeight() - 1) * c_tileWidthf)
+        {
+            m_playAreaView.setCenter(playAreaCenter.x, m_dungeon.getHeight() * c_tileWidthf);
+        }
+    }
+    break;
     }
 
-    return 0;
+    if (!m_dungeon.hasMovableTiles() && !m_players[m_turnIndex].isFighting() && (!m_dungeon.hasAttackableTiles() || !m_players[m_turnIndex].canAttack()))
+    {
+        advanceTurn();
+    }
+}
+
+void Game::advanceTurn()
+{
+    m_players[m_turnIndex].endTurn();
+    if (++m_turnIndex >= m_numberOfPlayers)
+    {
+        m_turnIndex = 0;
+    }
+
+    m_players[m_turnIndex].startTurn();
+    m_dungeon.clearMovableTiles();
+    m_dungeon.buildMovableTilesMap(m_players[m_turnIndex].getPosition(), m_players[m_turnIndex].getSpeed());
+    m_dungeon.buildAttackableTilesMap(m_players[m_turnIndex].getPosition(), 100, m_players[m_turnIndex].getRange());
+    m_playAreaView.setCenter(m_players[m_turnIndex].getPosition());
+    m_isRolling = false;
+    m_turnText.setString("Move Player " + std::to_string(m_turnIndex + 1));
+}
+
+void Game::draw(sf::RenderWindow &window)
+{
+    // draw play area
+    window.setView(m_playAreaView);
+    m_dungeon.draw(&window);
+    for (auto &player : m_players)
+    {
+        if (player.isAlive())
+        {
+            window.draw(player);
+        }
+    }
+
+    // draw dice
+    if (m_players[m_turnIndex].isFighting())
+    {
+        window.setView(m_diceView);
+        if (m_isRolling)
+        {
+            m_heldDie->setPosition(window.mapPixelToCoords(sf::Mouse::getPosition(window)) - c_vectorf5050);
+        }
+
+        for (const auto &die : m_dice)
+        {
+            window.draw(die);
+        }
+    }
+
+    // draw hud
+    window.setView(m_hudView);
+    window.draw(m_rollText);
+    window.draw(m_turnText);
 }

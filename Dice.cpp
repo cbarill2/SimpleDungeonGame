@@ -1,13 +1,8 @@
 #include "Dice.h"
 
-Dice::Dice() : Sprite()
+Dice::Dice(int numberOfSides, sf::Texture &texture, sf::IntRect textureRect, sf::Vector2f position)
+    : Sprite{texture, textureRect}, m_numberOfSides{numberOfSides}, prng{}, m_homePosition{position}
 {
-}
-
-Dice::Dice(int numberOfSides, sf::Texture &texture, sf::IntRect textureRect, sf::Vector2f position) : Sprite(texture, textureRect)
-{
-    m_numberOfSides = numberOfSides;
-    prng = PRNG();
     if (seed64 == 0)
     {
         time_t now;
@@ -16,12 +11,7 @@ Dice::Dice(int numberOfSides, sf::Texture &texture, sf::IntRect textureRect, sf:
     }
     prng.seed64(seed64); //probably not good to always use the same starting seed...
     prng.seed128(prng.nextSplitMix64(), prng.nextSplitMix64());
-    m_homePosition = sf::Vector2f(position);
     setPosition(position);
-}
-
-Dice::~Dice()
-{
 }
 
 int Dice::roll()
@@ -36,5 +26,5 @@ void Dice::resetPosition()
 
 std::string Dice::toString()
 {
-    return std::string("D").append(std::to_string(m_numberOfSides));
+    return std::string{"D"}.append(std::to_string(m_numberOfSides));
 }

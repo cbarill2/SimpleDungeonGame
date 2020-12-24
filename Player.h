@@ -7,7 +7,8 @@ class Player : public Unit
 {
 private:
 public:
-    Player();
-    Player(int x, int y, sf::Texture &texture);
-    ~Player();
+    Player() : Unit{} {}
+    Player(int x, int y, sf::Texture &activeTexture, sf::Texture &inactiveTexture)
+        : Unit{x, y, activeTexture, inactiveTexture, true} {}
+    ~Player() {}
 };

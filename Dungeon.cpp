@@ -1,24 +1,5 @@
 #include "Dungeon.h"
 
-using namespace sf;
-Dungeon::Dungeon(int width, int height, sf::Texture &texture, sf::Texture &enemyTexture)
-{
-    m_width = width;
-    m_height = height;
-    m_numberOfTiles = m_width * m_height;
-    m_tiles = new Tile[m_numberOfTiles];
-    m_texture = &texture;
-    m_enemyTexture = &enemyTexture;
-
-    generateProcedurally();
-    populateWithEnemies();
-}
-
-Dungeon::~Dungeon()
-{
-    delete[] m_tiles, m_enemies;
-}
-
 void Dungeon::draw(sf::RenderWindow *window)
 {
     for (const auto &indexSpeedPair : m_movableTiles)
@@ -31,13 +12,19 @@ void Dungeon::draw(sf::RenderWindow *window)
         window->draw(m_tiles[i]);
     }
 
+    for (auto &&indexEnemyPair : m_enemies)
+    {
+        window->draw(indexEnemyPair.second);
+    }
+    
+
     for (const auto &indexSpeedPair : m_movableTiles)
     {
         m_tiles[indexSpeedPair.first].setFillColor(sf::Color::White);
     }
 }
 
-bool Dungeon::buildMovableTilesMap(sf::Vector2f playerPosition, int playerSpeed)
+void Dungeon::buildMovableTilesMap(sf::Vector2f playerPosition, int playerSpeed)
 {
     int tileIndex;
 
@@ -59,8 +46,6 @@ bool Dungeon::buildMovableTilesMap(sf::Vector2f playerPosition, int playerSpeed)
             }
         }
     }
-
-    return !m_movableTiles.empty();
 }
 
 void Dungeon::clearMovableTiles()
@@ -78,45 +63,40 @@ bool Dungeon::isMovableTile(int tileIndex, int &speedLeft)
 
 bool Dungeon::isAttackableTile(int tileIndex)
 {
-    auto search = m_attackableEnemies.find(tileIndex);
-    bool found = (search != m_attackableEnemies.end() && search->second.isAlive());
-    return found;
+    return std::find(m_attackableTiles.begin(), m_attackableTiles.end(), tileIndex) != m_attackableTiles.end();
 }
 
-bool Dungeon::buildAttackableTilesMap(Vector2f playerPosition, int range)
+void Dungeon::buildAttackableTilesMap(sf::Vector2f playerPosition, int minRange, int maxRange)
 {
-    m_attackableEnemies.clear();
+    for (auto &&tile : m_attackableTiles)
+    {
+        m_tiles[tile].setFillColor(sf::Color::White);
+    }
+    
+    m_attackableTiles.clear();
+
+    if (maxRange == 0)
+        return; //maxRange 0 means targeting self?
     int tileIndex;
 
-    if (isValidTile(Vector2f(playerPosition.x, playerPosition.y + 100), tileIndex))
+    // for each tile in range, is it: valid, has a live enemy, and in LOS
+    for (int i = playerPosition.x - maxRange; i <= playerPosition.x + maxRange; i += c_tileWidthi)
     {
-        if (m_tiles[tileIndex].hasUnit() && m_enemies.find(tileIndex) != m_enemies.end())
+        for (int j = playerPosition.y - maxRange; j <= playerPosition.y + maxRange; j += c_tileHeighti)
         {
-            m_attackableEnemies[tileIndex] = m_enemies[tileIndex];
+            int dist = abs(playerPosition.x - i) + abs(playerPosition.y - j);
+            if (dist <= maxRange && dist >= minRange && isValidTile(sf::Vector2f{(float)i, (float)j}, tileIndex) && m_tiles[tileIndex].hasUnit())
+            {
+                auto search = m_enemies.find(tileIndex);
+                if (search != m_enemies.end() && search->second.isAlive() &&
+                    los(playerPosition, sf::Vector2f{(float)i, (float)j}))
+                {
+                    m_attackableTiles.push_back(tileIndex);
+                    m_tiles[tileIndex].setFillColor(sf::Color::Red);
+                }
+            }
         }
     }
-    if (isValidTile(Vector2f(playerPosition.x - 100, playerPosition.y), tileIndex))
-    {
-        if (m_tiles[tileIndex].hasUnit() && m_enemies.find(tileIndex) != m_enemies.end())
-        {
-            m_attackableEnemies[tileIndex] = m_enemies[tileIndex];
-        }
-    }
-    if (isValidTile(Vector2f(playerPosition.x + 100, playerPosition.y), tileIndex))
-    {
-        if (m_tiles[tileIndex].hasUnit() && m_enemies.find(tileIndex) != m_enemies.end())
-        {
-            m_attackableEnemies[tileIndex] = m_enemies[tileIndex];
-        }
-    }
-    if (isValidTile(Vector2f(playerPosition.x, playerPosition.y - 100), tileIndex))
-    {
-        if (m_tiles[tileIndex].hasUnit() && m_enemies.find(tileIndex) != m_enemies.end())
-        {
-            m_attackableEnemies[tileIndex] = m_enemies[tileIndex];
-        }
-    }
-    return !m_attackableEnemies.empty();
 }
 
 bool Dungeon::isTileAtPosition(sf::Vector2f &position)
@@ -288,9 +268,49 @@ void Dungeon::populateWithEnemies()
     {
         if (prng.random_roll(50) == 1 && !m_tiles[i].hasCollision() && !m_tiles[i].hasUnit())
         {
-            m_enemies[i] = Enemy{m_tiles[i].getXCoord(), m_tiles[i].getYCoord(), *m_enemyTexture};
+            m_enemies.insert(std::pair(i, Enemy{m_tiles[i].getXCoord(), m_tiles[i].getYCoord(), *m_enemyTexture, *m_enemyTexture}));
             m_tiles[i].toggleUnit();
             --remainingEnemies;
         }
     }
+}
+
+bool Dungeon::los(sf::Vector2f currentTile, sf::Vector2f targetTile)
+{
+    if (currentTile.x == targetTile.x && currentTile.y == targetTile.y)
+    { //tile is always in line-of-sight from itself
+        return true;
+    }
+
+    float currentX = currentTile.x + 50, currentY = currentTile.y + 50;
+    float targetX = targetTile.x + 50, targetY = targetTile.y + 50;
+    float slope = (targetY - currentY) / (targetX - currentX);
+
+    // walk the line from center of currentTile to the center of targetTile
+    // checking whether each tile is invalid or collidable
+    bool isLOS = true;
+    int tileIndex;
+    while (isLOS && currentX < targetX)
+    {
+        currentX += c_tileWidthf;
+        currentY = targetY - (slope * (targetX - currentX));
+        if (!isValidTile(sf::Vector2f{currentX, currentY}, tileIndex) || m_tiles[tileIndex].hasCollision())
+        {
+            isLOS = false;
+        }
+    }
+    return isLOS;
+}
+
+void Dungeon::initialize(int width, int height, sf::Texture &texture, sf::Texture &enemyTexture)
+{
+    m_width = width;
+    m_height = height;
+    m_numberOfTiles = m_width * m_height;
+    m_texture = &texture;
+    m_enemyTexture = &enemyTexture;
+    m_tiles = new Tile[m_numberOfTiles];
+
+    generateProcedurally();
+    populateWithEnemies();
 }
