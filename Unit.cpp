@@ -1,3 +1,4 @@
+#include "Attack.h"
 #include "Unit.h"
 
 Unit::Unit()
@@ -20,6 +21,18 @@ Unit::Unit(int x, int y, const sf::Texture &activeTexture, const sf::Texture &in
     setTexture(*m_inactiveTexture);
     setTextureRect(sf::IntRect{0, 0, 100, 100});
     moveToCoords(x, y, m_currentSpeed);
+    m_attacks.push_back(Attack{6});
+    for (auto &&attack : m_attacks)
+    {
+        if (attack.getMinRange() < m_minRange)
+        {
+            m_minRange = attack.getMinRange();
+        }
+        if (attack.getMaxRange() > m_maxRange)
+        {
+            m_maxRange = attack.getMaxRange();
+        }
+    }
 }
 
 void Unit::setMaxStats()
@@ -66,12 +79,24 @@ void Unit::endTurn()
     setTextureRect(sf::IntRect{0, 0, 100, 100});
 }
 
-AttackResult Unit::attack(int attackRoll)
+void Unit::startAttack(int attackIndex)
 {
-    --m_currentAttackPoints;
+    m_isAttacking = true;
+    m_selectedAttack = m_attacks[attackIndex];
+}
+
+void Unit::stopAttack()
+{
+    m_isAttacking = false;
+}
+
+AttackResult Unit::finishAttack(int attackRoll)
+{
+    AttackResult result;
+    m_currentAttackPoints -= m_selectedAttack.getCost();
     if (attackRoll > m_defense)
     {
-        int xpReceived = m_target->takeDamage();
+        int xpReceived = m_target->takeDamage(m_selectedAttack.getDamage());
         if (xpReceived > 0)
         {
             m_experiencePoints += xpReceived;
@@ -79,17 +104,28 @@ AttackResult Unit::attack(int attackRoll)
             {
                 // todo: gain level if enough XP gained
             }
-            return AttackResult::Kill;
+            result = AttackResult::Kill;
         }
-        return AttackResult::Hit;
+        else
+        {
+            result = AttackResult::Hit;
+        }
     }
-    return AttackResult::Miss;
+    else
+    {
+        result = AttackResult::Miss;
+    }
+    stopAttack();
+
+    return result;
 }
 
-int Unit::takeDamage()
+int Unit::takeDamage(int amount)
 {
-    if (--m_currentHealth <= 0)
+    m_currentHealth -= amount;
+    if (m_currentHealth <= 0)
     {
+        m_currentHealth = 0;
         die();
         return m_xpValue;
     }

@@ -1,12 +1,8 @@
 #include <windows.h>
 #include <SFML/Graphics.hpp>
+#include "Attack.h"
 
 #pragma once
-
-enum class AttackResult
-{
-    Miss, Hit, Kill
-};
 
 class Unit : public sf::Sprite
 {
@@ -27,6 +23,8 @@ private:
     void setStatsToMax();
     void setMaxStats();
     Unit *m_target{nullptr};
+    Attack m_selectedAttack;
+    std::vector<Attack> m_attacks;
 
 protected:
 public:
@@ -40,16 +38,20 @@ public:
     bool canAttack() { return (m_currentAttackPoints > 0); }
     bool hasTarget() { return m_hasTarget; }
     bool isAttacking() { return m_isAttacking; }
+    bool isRollingAttackDie(int sides) { return (sides == m_selectedAttack.getAttackDieSides()); }
 
     int getSpeed() { return m_currentSpeed; }
     int getMaxRange() { return m_maxRange * 100; }
     int getMinRange() { return m_minRange * 100; }
+    std::string getAttackDieString() { return m_selectedAttack.getAttackDieString(); }
 
     void moveToCoords(int x, int y, int newSpeed);
     void startTurn();
     void endTurn();
-    AttackResult attack(int attackRoll);
-    int takeDamage();
+    void startAttack(int attackIndex);
+    void stopAttack();
+    AttackResult finishAttack(int attackRoll);
+    int takeDamage(int amount);
     void reset();
     void setTarget(Unit *target);
     void clearTarget();

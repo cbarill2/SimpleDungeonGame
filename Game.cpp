@@ -90,6 +90,12 @@ void Game::createTextObjects()
     m_turnText.setCharacterSize(50);
     m_turnText.setPosition(-10495, -10025);
     m_turnText.setString("Move Player " + std::to_string(m_turnIndex + 1));
+    m_attackText.setFont(m_font);
+    m_attackText.setCharacterSize(20);
+    m_attackText.setFillColor(sf::Color::Black);
+    m_attackText.setOutlineColor(sf::Color::White);
+    m_attackText.setOutlineThickness(1.0f);
+    m_attackText.setPosition(-2000.0f, -2000.0f);
 }
 
 void Game::createViews()
@@ -101,6 +107,10 @@ void Game::createViews()
     m_diceView.setCenter(sf::Vector2f{-5600.0f, -4600.0f});
     m_diceView.setSize(sf::Vector2f{c_diceViewScale * c_tileWidthf, c_diceViewScale * c_tileWidthf});
     m_diceView.setViewport(sf::FloatRect{0.0f, 0.0f, 1.0f, 1.0f});
+
+    m_attackMenuView.setCenter(sf::Vector2f{-1900.0f, -1900.0f});
+    m_attackMenuView.setSize(sf::Vector2f{c_attackMenuViewScale * c_tileWidthf, c_attackMenuViewScale * c_tileWidthf});
+    m_attackMenuView.setViewport(sf::FloatRect{0.6f, 0.44f, 0.4f, 0.5f});
 
     m_hudView.setCenter(sf::Vector2f{-10000.0f, -10000.0f});
     m_hudView.setSize(sf::Vector2f{10 * c_tileWidthf, 1 * c_tileWidthf});
@@ -158,12 +168,16 @@ void Game::selectTile(sf::Vector2f clickPosition)
                 m_dungeon.getTileAtPosition(clickPosition).toggleUnit();
                 m_dungeon.clearMovableTiles();
                 m_dungeon.buildMovableTilesMap(currentPlayer.getPosition(), currentPlayer.getSpeed());
-                m_dungeon.buildAttackableTilesMap(currentPlayer.getPosition(), currentPlayer.getMinRange(), currentPlayer.getMaxRange());
+                if (currentPlayer.canAttack())
+                {
+                    m_dungeon.buildAttackableTilesMap(currentPlayer.getPosition(), currentPlayer.getMinRange(), currentPlayer.getMaxRange());
+                }
             }
             else if (currentPlayer.canAttack() && m_dungeon.isAttackableTile(index))
             {
                 currentPlayer.setTarget(&m_dungeon.getEnemyOnTile(index));
                 m_turnText.setString("Select Attack");
+                m_attackText.setString("Test\nAttack\n\nString");
                 m_dungeon.clearMovableTiles();
                 m_playAreaView.setCenter(clickPosition);
             }
@@ -309,6 +323,11 @@ void Game::processInput(sf::RenderWindow &window, sf::Event event)
                 m_isRolling = false;
                 m_heldDie->resetPosition();
             }
+            else if (currentPlayer.isAttacking())
+            {
+                currentPlayer.stopAttack();
+                m_turnText.setString("Select Attack");
+            }
             else if (currentPlayer.hasTarget())
             {
                 currentPlayer.clearTarget();
@@ -332,37 +351,59 @@ void Game::processInput(sf::RenderWindow &window, sf::Event event)
         {
             if (m_isRolling)
             {
-                int playerRoll = m_heldDie->roll();
-                m_rollText.setString(m_heldDie->toString() + ": " + std::to_string(playerRoll));
+                m_lastRoll = m_heldDie->roll();
+                m_rollText.setString(m_heldDie->toString() + ": " + std::to_string(m_lastRoll));
                 m_heldDie->resetPosition();
+                m_isRolling = false;
+                if (currentPlayer.isAttacking() && currentPlayer.isRollingAttackDie(m_heldDie->getNumberOfSides()))
+                {
+                    switch (currentPlayer.finishAttack(m_lastRoll))
+                    {
+                    case AttackResult::Hit:
+                    {
+                        m_turnText.setString("HIT!");
+                    }
+                    break;
+                    case AttackResult::Kill:
+                    {
+                        // if (currentPlayer.getTarget().isPlayer())
+                        // {
+                        // }
+                        // else
+                        // {
+                        m_turnText.setString("Enemy Defeated!");
+                        // }
+                    }
+                    break;
+                    case AttackResult::Miss:
+                    {
+                        m_turnText.setString("Miss!");
+                    }
+                    break;
+                    }
 
-                switch (m_players[m_turnIndex].attack(playerRoll))
-                {
-                case AttackResult::Hit:
-                {
-                    m_turnText.setString("HIT!");
-                }
-                break;
-                case AttackResult::Kill:
-                {
-                    // if (!m_players[m_turnIndex].getTarget().isPlayer())
-                    // {
-                    m_turnText.setString("Enemy Defeated!");
-                    // m_dungeon.buildMovableTilesMap(m_players[m_turnIndex].getPosition(), m_players[m_turnIndex].getSpeed());
-                    // }
+                    currentPlayer.clearTarget();
+                    m_dungeon.buildMovableTilesMap(currentPlayer.getPosition(), currentPlayer.getSpeed());
+                    if (currentPlayer.canAttack())
+                    {
+                        m_dungeon.buildAttackableTilesMap(currentPlayer.getPosition(), currentPlayer.getMinRange(), currentPlayer.getMaxRange());
+                    }
+                    else
+                    {
                         m_dungeon.clearAttackableTiles();
+                    }
                 }
-                break;
-                case AttackResult::Miss:
-                {
-                    m_turnText.setString("Miss!");
-                }
-                break;
-                }
-
-                m_players[m_turnIndex].clearTarget();
             }
-            m_isRolling = false;
+            else if (currentPlayer.hasTarget())
+            {
+                sf::Vector2f clickPosition = window.mapPixelToCoords(
+                    sf::Vector2i(event.mouseButton.x, event.mouseButton.y), m_attackMenuView);
+                if (m_attackText.getGlobalBounds().contains(clickPosition))
+                {
+                    currentPlayer.startAttack(0);
+                    m_turnText.setString(currentPlayer.getAttackDieString());
+                }
+            }
         }
         break;
         case sf::Mouse::Right:
@@ -396,6 +437,13 @@ void Game::draw(sf::RenderWindow &window)
         {
             window.draw(player);
         }
+    }
+
+    // draw attack menu
+    if (currentPlayer.hasTarget() && !currentPlayer.isAttacking())
+    {
+        window.setView(m_attackMenuView);
+        window.draw(m_attackText);
     }
 
     // draw dice
