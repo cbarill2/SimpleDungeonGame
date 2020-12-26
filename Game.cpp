@@ -267,6 +267,7 @@ void Game::processInput(sf::RenderWindow &window, sf::Event event)
                     m_turnText.setString("Enemy Defeated!");
                     // m_dungeon.buildMovableTilesMap(m_players[m_turnIndex].getPosition(), m_players[m_turnIndex].getSpeed());
                     // }
+                        m_dungeon.clearAttackableTiles();
                 }
                 break;
                 case AttackResult::Miss:

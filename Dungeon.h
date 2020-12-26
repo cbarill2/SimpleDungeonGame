@@ -44,6 +44,7 @@ public:
     int getHeight() { return m_height; }
     int getWidth() { return m_width; }
     void buildAttackableTilesMap(sf::Vector2f playerPosition, int minRange = 100, int maxRange = 100);
+    void clearAttackableTiles();
     bool hasAttackableTiles() { return !m_attackableTiles.empty(); }
     bool isTileAtPosition(sf::Vector2f &position);
     bool tileHasUnit(sf::Vector2f position);

@@ -68,12 +68,7 @@ bool Dungeon::isAttackableTile(int tileIndex)
 
 void Dungeon::buildAttackableTilesMap(sf::Vector2f playerPosition, int minRange, int maxRange)
 {
-    for (auto &&tile : m_attackableTiles)
-    {
-        m_tiles[tile].setFillColor(sf::Color::White);
-    }
-    
-    m_attackableTiles.clear();
+    clearAttackableTiles();
 
     if (maxRange == 0)
         return; //maxRange 0 means targeting self?
@@ -97,6 +92,16 @@ void Dungeon::buildAttackableTilesMap(sf::Vector2f playerPosition, int minRange,
             }
         }
     }
+}
+
+void Dungeon::clearAttackableTiles()
+{
+    for (auto &&tile : m_attackableTiles)
+    {
+        m_tiles[tile].setFillColor(sf::Color::White);
+    }
+    
+    m_attackableTiles.clear();    
 }
 
 bool Dungeon::isTileAtPosition(sf::Vector2f &position)
@@ -282,8 +287,8 @@ bool Dungeon::los(sf::Vector2f currentTile, sf::Vector2f targetTile)
         return true;
     }
 
-    float currentX = currentTile.x + 50, currentY = currentTile.y + 50;
-    float targetX = targetTile.x + 50, targetY = targetTile.y + 50;
+    float currentX = currentTile.x + 50.0f, currentY = currentTile.y + 50.0f;
+    float targetX = targetTile.x + 50.0f, targetY = targetTile.y + 50.0f;
     float slope = (targetY - currentY) / (targetX - currentX);
 
     // walk the line from center of currentTile to the center of targetTile
