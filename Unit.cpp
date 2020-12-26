@@ -1,26 +1,25 @@
 #include "Unit.h"
 
 Unit::Unit()
-    : Sprite{}, m_startingCoords{0, 0}, m_experiencePoints{0}, m_level{1}, m_hasTarget{false},
-      m_player{false}, m_selected{false}, m_alive{true}, m_xpValue{0}, m_range{1}
+    : Sprite{}, m_startingCoords{0, 0}, m_experiencePoints{0}, m_level{1},
+      m_player{false}, m_alive{true}, m_xpValue{0}, m_maxRange{1}
 {
     setMaxStats();
     setStatsToMax();
-    setPosition(m_startingCoords.x, m_startingCoords.y, m_currentSpeed);
+    moveToCoords(m_startingCoords.x, m_startingCoords.y, m_currentSpeed);
 }
 
-Unit::Unit(int x, int y, sf::Texture &activeTexture, sf::Texture &inactiveTexture, bool isPlayer)
+Unit::Unit(int x, int y, const sf::Texture &activeTexture, const sf::Texture &inactiveTexture, bool isPlayer)
     : Sprite{}, m_startingCoords{x, y}, m_experiencePoints{0}, m_level{1}, m_player{isPlayer},
-      m_selected{false}, m_alive{true}, m_xpValue{(m_player) ? 0 : 1}, m_range{4},
-      m_hasTarget{false}
+      m_alive{true}, m_xpValue{(m_player) ? 0 : 1}, m_minRange{1}, m_maxRange{1}
 {
     m_activeTexture = &activeTexture;
     m_inactiveTexture = &inactiveTexture;
     setMaxStats();
     setStatsToMax();
-    setTexture(inactiveTexture);
+    setTexture(*m_inactiveTexture);
     setTextureRect(sf::IntRect{0, 0, 100, 100});
-    setPosition(x, y, m_currentSpeed);
+    moveToCoords(x, y, m_currentSpeed);
 }
 
 void Unit::setMaxStats()
@@ -38,12 +37,12 @@ void Unit::setStatsToMax()
     m_currentAttackPoints = m_maxAttackPoints;
 }
 
-void Unit::setPosition(int x, int y, int speed)
+void Unit::moveToCoords(int x, int y, int newSpeed)
 {
     Sprite::setPosition(sf::Vector2f{x * 100.0f, y * 100.0f});
     m_coords.x = x;
     m_coords.y = y;
-    m_currentSpeed = speed;
+    m_currentSpeed = newSpeed;
 }
 
 void Unit::startTurn()
@@ -52,7 +51,7 @@ void Unit::startTurn()
     // {
     m_currentSpeed = m_maxSpeed;
     m_currentAttackPoints = m_maxAttackPoints;
-    m_selected = true;
+    m_isSelected = true;
     clearTarget();
     setTexture(*m_activeTexture);
     setTextureRect(sf::IntRect{0, 100, 100, 100});
@@ -61,7 +60,7 @@ void Unit::startTurn()
 
 void Unit::endTurn()
 {
-    m_selected = false;
+    m_isSelected = false;
     clearTarget();
     setTexture(*m_inactiveTexture);
     setTextureRect(sf::IntRect{0, 0, 100, 100});
@@ -112,7 +111,7 @@ void Unit::reset()
     m_experiencePoints = 0;
     m_level = 1;
     setStatsToMax();
-    setPosition(m_startingCoords.x, m_startingCoords.y, m_maxSpeed);
+    moveToCoords(m_startingCoords.x, m_startingCoords.y, m_maxSpeed);
 }
 
 void Unit::setTarget(Unit *target)

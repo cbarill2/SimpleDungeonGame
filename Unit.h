@@ -13,15 +13,16 @@ class Unit : public sf::Sprite
 private:
     sf::IntRect m_deathTextureRect{100, 0, 100, 100};
     sf::Vector2i m_coords, m_startingCoords;
-    sf::Texture *m_activeTexture, *m_inactiveTexture;
+    const sf::Texture *m_activeTexture, *m_inactiveTexture;
 
     const int c_xpToLevel[5] = {5, 10, 25, 50, 100};
     int m_maxHealth, m_maxSpeed, m_maxAttackPoints;
     int m_currentHealth, m_currentSpeed, m_currentAttackPoints;
     int m_experiencePoints, m_level, m_xpValue;
-    int m_defense, m_range;
+    int m_defense, m_minRange, m_maxRange;
 
-    bool m_player, m_selected, m_alive, m_hasTarget;
+    bool m_isSelected{false}, m_hasTarget{false}, m_isAttacking{false};
+    bool m_player, m_alive;
     void die();
     void setStatsToMax();
     void setMaxStats();
@@ -30,18 +31,21 @@ private:
 protected:
 public:
     Unit();
-    Unit(int x, int y, sf::Texture &activeTexture, sf::Texture &inactiveTexture, bool isPlayer);
+    Unit(int x, int y, const sf::Texture &activeTexture, const sf::Texture &inactiveTexture, bool isPlayer);
     ~Unit() {}
 
-    bool isSelected() { return m_selected; }
+    bool isSelected() { return m_isSelected; }
     bool isPlayer() { return m_player; }
     bool isAlive() { return m_alive; }
     bool canAttack() { return (m_currentAttackPoints > 0); }
-    bool isFighting() { return m_hasTarget; }
+    bool hasTarget() { return m_hasTarget; }
+    bool isAttacking() { return m_isAttacking; }
 
     int getSpeed() { return m_currentSpeed; }
-    int getRange() { return m_range * 100; }
-    void setPosition(int x, int y, int speed);
+    int getMaxRange() { return m_maxRange * 100; }
+    int getMinRange() { return m_minRange * 100; }
+
+    void moveToCoords(int x, int y, int newSpeed);
     void startTurn();
     void endTurn();
     AttackResult attack(int attackRoll);

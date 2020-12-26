@@ -31,14 +31,24 @@ private:
     sf::Texture m_dungeonTexture, m_playerTexture, m_enemyTexture, m_fadedPlayerTexture, m_attackableEnemyTexture, m_diceTexture;
     sf::View m_playAreaView, m_diceView, m_hudView, m_attackMenuView;
 
+    void initialize();
+    void loadTextures();
+    void createPlayers();
+    void createDungeon();
+    void createDice();
+    void createTextObjects();
+    void createViews();
+    void reset();
+    void advanceTurn();
+    void zoom(float delta);
+    bool tryGrabDie(sf::Vector2f clickPosition);
+    void selectTile(sf::Vector2f clickPosition);
+
 public:
     Game() { initialize(); }
     ~Game() {}
 
-    void initialize();
-    void reset();
     void processInput(sf::RenderWindow &window, sf::Event event);
-    void advanceTurn();
     void draw(sf::RenderWindow &window);
     sf::String getName() { return m_name; }
     bool isRunning() { return m_isRunning; }
