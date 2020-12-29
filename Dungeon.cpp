@@ -1,6 +1,6 @@
 #include "Dungeon.h"
 
-void Dungeon::draw(sf::RenderWindow *window)
+void Dungeon::draw(sf::RenderWindow &window)
 {
     for (const auto &indexSpeedPair : m_movableTiles)
     {
@@ -9,15 +9,14 @@ void Dungeon::draw(sf::RenderWindow *window)
 
     for (int i = 0; i < m_numberOfTiles; ++i)
     {
-        window->draw(m_tiles[i]);
+        window.draw(m_tiles[i]);
     }
 
     for (auto &&indexEnemyPair : m_enemies)
     {
-        window->draw(indexEnemyPair.second);
+        window.draw(indexEnemyPair.second);
     }
     
-
     for (const auto &indexSpeedPair : m_movableTiles)
     {
         m_tiles[indexSpeedPair.first].setFillColor(sf::Color::White);
@@ -273,7 +272,7 @@ void Dungeon::populateWithEnemies()
     {
         if (prng.random_roll(50) == 1 && !m_tiles[i].hasCollision() && !m_tiles[i].hasUnit())
         {
-            m_enemies.insert(std::pair(i, Enemy{m_tiles[i].getXCoord(), m_tiles[i].getYCoord(), *m_enemyTexture, *m_enemyTexture}));
+            m_enemies.insert(std::pair(i, Enemy{m_tiles[i].getXCoord(), m_tiles[i].getYCoord(), *m_enemyTexture, *m_enemyTexture, *m_enemyTexture}));
             m_tiles[i].toggleUnit();
             --remainingEnemies;
         }

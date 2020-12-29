@@ -30,7 +30,8 @@ private:
 
     sf::Font m_font;
     sf::Text m_turnText, m_rollText, m_attackText;
-    sf::Texture m_dungeonTexture, m_playerTexture, m_enemyTexture, m_fadedPlayerTexture, m_attackableEnemyTexture, m_diceTexture;
+    sf::Texture m_dungeonTexture, m_playerTexture, m_enemyTexture, m_attackTexture,
+        m_fadedPlayerTexture, m_attackableEnemyTexture, m_diceTexture;
     sf::View m_playAreaView, m_diceView, m_hudView, m_attackMenuView;
 
     void initialize();

@@ -10,7 +10,7 @@ Unit::Unit()
     moveToCoords(m_startingCoords.x, m_startingCoords.y, m_currentSpeed);
 }
 
-Unit::Unit(int x, int y, const sf::Texture &activeTexture, const sf::Texture &inactiveTexture, bool isPlayer)
+Unit::Unit(int x, int y, const sf::Texture &activeTexture, const sf::Texture &inactiveTexture, const sf::Texture &attackTexture, bool isPlayer)
     : Sprite{}, m_startingCoords{x, y}, m_experiencePoints{0}, m_level{1}, m_player{isPlayer},
       m_alive{true}, m_xpValue{(m_player) ? 0 : 1}, m_minRange{1}, m_maxRange{1}
 {
@@ -21,7 +21,8 @@ Unit::Unit(int x, int y, const sf::Texture &activeTexture, const sf::Texture &in
     setTexture(*m_inactiveTexture);
     setTextureRect(sf::IntRect{0, 0, 100, 100});
     moveToCoords(x, y, m_currentSpeed);
-    m_attacks.push_back(Attack{6});
+    m_attacks.push_back(Attack{8, 1, 1, attackTexture, sf::IntRect{0, 0, 100, 100}});
+    m_attacks.push_back(Attack{6, 2, 4, attackTexture, sf::IntRect{100, 0, 100, 100}});
     for (auto &&attack : m_attacks)
     {
         if (attack.getMinRange() < m_minRange)
@@ -79,10 +80,18 @@ void Unit::endTurn()
     setTextureRect(sf::IntRect{0, 0, 100, 100});
 }
 
-void Unit::startAttack(int attackIndex)
+bool Unit::chooseAttack(sf::Vector2f clickPosition)
 {
-    m_isAttacking = true;
-    m_selectedAttack = m_attacks[attackIndex];
+    for (auto &&attack : m_attacks)
+    {
+        if (attack.getGlobalBounds().contains(clickPosition))
+        {
+            m_isAttacking = true;
+            m_selectedAttack = attack;
+            return true;
+        }
+    }
+    return false;
 }
 
 void Unit::stopAttack()
@@ -160,4 +169,26 @@ void Unit::clearTarget()
 {
     m_target = nullptr;
     m_hasTarget = false;
+}
+
+int Unit::getDistanceFromTarget(Unit &target)
+{
+    return abs(m_coords.x - target.getXCoord()) + abs(m_coords.y - target.getYCoord());
+}
+
+void Unit::draw(sf::RenderWindow &window)
+{
+    window.draw(*this);
+    if (m_hasTarget && !m_isAttacking)
+    {
+        int targetDistance = getDistanceFromTarget(*m_target);
+        for (int i = 0, j = 0; i < m_attacks.size(); i++)
+        {
+            if (m_attacks[i].getMinRange() <= targetDistance && m_attacks[i].getMaxRange() >= targetDistance)
+            {
+                m_attacks[i].setPosition(getPosition().x - (c_attackTileWidth * (j + 1)), getPosition().y - c_attackTileWidth);
+                window.draw(m_attacks[i]);
+            }
+        }
+    }
 }

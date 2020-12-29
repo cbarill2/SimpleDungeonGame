@@ -10,7 +10,7 @@ enum class AttackResult
     Kill
 };
 
-class Attack
+class Attack : public sf::RectangleShape
 {
 private:
     int m_minRange{1}, m_maxRange{1}, m_baseCost{1}, m_baseDamage{1};
@@ -20,7 +20,12 @@ private:
 
 public:
     Attack() {}
-    Attack(int dieSides) : m_attackDieSides{dieSides}, m_attackDieString{"Roll a D" + std::to_string(dieSides)} {}
+    Attack(int dieSides, int minRange, int maxRange, const sf::Texture &attackTexture, sf::IntRect textureRect)
+        : RectangleShape{sf::Vector2f{50.f, 50.f}}, m_attackDieSides{dieSides}, m_minRange{minRange}, m_maxRange{maxRange}, m_attackDieString{"Roll a D" + std::to_string(dieSides)}
+    {
+        setTexture(&attackTexture);
+        setTextureRect(textureRect);
+    }
     ~Attack() {}
     int getMinRange() { return m_minRange; }
     int getMaxRange() { return m_maxRange; }

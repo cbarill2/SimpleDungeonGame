@@ -7,7 +7,7 @@ void Game::initialize()
     m_numberOfPlayers = 4; // TODO: make this selectable in game
     m_prng.seed64(0);
     m_prng.seed128(m_prng.nextSplitMix64(), m_prng.nextSplitMix64());
-    
+
     loadTextures();
     createPlayers();
     createDungeon();
@@ -51,13 +51,16 @@ void Game::loadTextures()
 
     image = ResourceLoader::LoadFromResource<sf::Image>("dice");
     m_diceTexture.loadFromImage(image);
+
+    image = ResourceLoader::LoadFromResource<sf::Image>("attack");
+    m_attackTexture.loadFromImage(image);
 }
 
 void Game::createPlayers()
 {
     for (int i = 0; i < m_numberOfPlayers; ++i)
     {
-        m_players.push_back(Player{1, 0, m_playerTexture, m_fadedPlayerTexture});
+        m_players.push_back(Player{1, 0, m_playerTexture, m_fadedPlayerTexture, m_attackTexture});
     }
 }
 
@@ -177,9 +180,9 @@ void Game::selectTile(sf::Vector2f clickPosition)
             {
                 currentPlayer.setTarget(&m_dungeon.getEnemyOnTile(index));
                 m_turnText.setString("Select Attack");
-                m_attackText.setString("Test\nAttack\n\nString");
                 m_dungeon.clearMovableTiles();
-                m_playAreaView.setCenter(clickPosition);
+                m_playAreaView.setCenter(currentPlayer.getPosition().x + (clickPosition.x - currentPlayer.getPosition().x)/2,
+                                         currentPlayer.getPosition().y + (clickPosition.y - currentPlayer.getPosition().y)/2);
             }
             else
             {
@@ -397,10 +400,9 @@ void Game::processInput(sf::RenderWindow &window, sf::Event event)
             else if (currentPlayer.hasTarget())
             {
                 sf::Vector2f clickPosition = window.mapPixelToCoords(
-                    sf::Vector2i(event.mouseButton.x, event.mouseButton.y), m_attackMenuView);
-                if (m_attackText.getGlobalBounds().contains(clickPosition))
+                    sf::Vector2i(event.mouseButton.x, event.mouseButton.y), m_playAreaView);
+                if (currentPlayer.chooseAttack(clickPosition))
                 {
-                    currentPlayer.startAttack(0);
                     m_turnText.setString(currentPlayer.getAttackDieString());
                 }
             }
@@ -430,13 +432,13 @@ void Game::draw(sf::RenderWindow &window)
 {
     // draw play area
     window.setView(m_playAreaView);
-    m_dungeon.draw(&window);
+    m_dungeon.draw(window);
     for (auto &player : m_players)
     {
-        if (player.isAlive())
-        {
-            window.draw(player);
-        }
+        // if (player.isAlive())
+        // {
+        player.draw(window);
+        // }
     }
 
     // draw attack menu

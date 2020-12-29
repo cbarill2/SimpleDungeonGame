@@ -1,4 +1,3 @@
-#include <windows.h>
 #include <random>
 #include <map>
 #include "Tile.h"
@@ -32,7 +31,7 @@ public:
     Dungeon() {}
     ~Dungeon() { delete[] m_tiles; }
 
-    void draw(sf::RenderWindow *window);
+    void draw(sf::RenderWindow &window);
     void buildMovableTilesMap(sf::Vector2f playerPosition, int playerSpeed);
     bool hasMovableTiles() { return !m_movableTiles.empty(); }
     void clearMovableTiles();
