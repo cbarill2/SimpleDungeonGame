@@ -272,7 +272,7 @@ void Dungeon::populateWithEnemies()
     {
         if (prng.random_roll(50) == 1 && !m_tiles[i].hasCollision() && !m_tiles[i].hasUnit())
         {
-            m_enemies.insert(std::pair(i, Enemy{m_tiles[i].getXCoord(), m_tiles[i].getYCoord(), *m_enemyTexture, *m_enemyTexture, *m_enemyTexture}));
+            m_enemies.insert(std::pair<int, Enemy>(i, Enemy{m_tiles[i].getXCoord(), m_tiles[i].getYCoord(), *m_enemyTexture, *m_enemyTexture, *m_enemyTexture}));
             m_tiles[i].toggleUnit();
             --remainingEnemies;
         }
