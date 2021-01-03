@@ -225,7 +225,7 @@ void Dungeon::generateProcedurally()
                         else
                         {
                             // wall tile
-                            tileTextureIndex = 9;
+                            tileTextureIndex = 1;
                         }
                     }
                     else
@@ -233,6 +233,8 @@ void Dungeon::generateProcedurally()
                         //floor tile
                         tileTextureIndex = 0;
                     }
+
+                    tileTextureIndex += ((int)m_biome * c_tileMapHeight * c_tileMapWidth);
 
                     m_tiles[tileIndex] = Tile{tileSize, tileTextureIndex % 2 == 1, tileTextureIndex == 2};
                     m_tiles[tileIndex].setTexture(m_texture);
@@ -306,11 +308,12 @@ bool Dungeon::los(sf::Vector2f currentTile, sf::Vector2f targetTile)
     return isLOS;
 }
 
-void Dungeon::initialize(int width, int height, sf::Texture &texture, sf::Texture &enemyTexture)
+void Dungeon::initialize(int width, int height, Biome biome, sf::Texture &texture, sf::Texture &enemyTexture)
 {
     m_width = width;
     m_height = height;
     m_numberOfTiles = m_width * m_height;
+    m_biome = biome;
     m_texture = &texture;
     m_enemyTexture = &enemyTexture;
     m_tiles = new Tile[m_numberOfTiles];

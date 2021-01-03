@@ -14,7 +14,7 @@ private:
     const int c_tileWidthi{100};
     const int c_tileHeighti{100};
     const int c_tileMapWidth{8};
-    const int c_tileMapHeight{3};
+    const int c_tileMapHeight{1};
 
     int m_numberOfTiles;
     std::map<int, int> m_movableTiles; // tile index, player speed remaining
@@ -23,6 +23,7 @@ private:
     Tile *m_tiles;
     sf::Texture *m_texture, *m_enemyTexture;
     int m_width, m_height, m_numberOfEnemies;
+
     void generateProcedurally();
     void populateWithEnemies();
     bool los(sf::Vector2f currentTile, sf::Vector2f targetTile);
@@ -31,6 +32,11 @@ public:
     Dungeon() {}
     ~Dungeon() { delete[] m_tiles; }
 
+    enum class Biome
+    {
+        Stone,
+        Forest,
+    } m_biome;
     void draw(sf::RenderWindow &window);
     void buildMovableTilesMap(sf::Vector2f playerPosition, int playerSpeed);
     bool hasMovableTiles() { return !m_movableTiles.empty(); }
@@ -51,5 +57,5 @@ public:
     bool isValidTile(sf::Vector2f position, int &tileIndex);
     void removeEnemy(int defeatedEnemyIndex);
     void reset();
-    void initialize(int width, int height, sf::Texture &texture, sf::Texture &enemyTexture);
+    void initialize(int width, int height, Biome biome, sf::Texture &texture, sf::Texture &enemyTexture);
 };

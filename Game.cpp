@@ -68,7 +68,7 @@ void Game::createDungeon()
 {
     int dungeonWidth{(int)m_prng.random_roll(41, 20)};
     int dungeonHeight{(int)m_prng.random_roll(41, 20)};
-    m_dungeon.initialize(dungeonWidth, dungeonHeight, m_dungeonTexture, m_enemyTexture);
+    m_dungeon.initialize(dungeonWidth, dungeonHeight, Dungeon::Biome::Forest, m_dungeonTexture, m_enemyTexture);
     m_dungeon.getTileAtPosition(currentPlayer.getPosition()).toggleUnit();
     currentPlayer.startTurn();
     m_dungeon.buildMovableTilesMap(currentPlayer.getPosition(), currentPlayer.getSpeed());
