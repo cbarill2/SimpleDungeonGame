@@ -16,7 +16,7 @@ void Dungeon::draw(sf::RenderWindow &window)
     {
         window.draw(indexEnemyPair.second);
     }
-    
+
     for (const auto &indexSpeedPair : m_movableTiles)
     {
         m_tiles[indexSpeedPair.first].setFillColor(sf::Color::White);
@@ -99,8 +99,8 @@ void Dungeon::clearAttackableTiles()
     {
         m_tiles[tile].setFillColor(sf::Color::White);
     }
-    
-    m_attackableTiles.clear();    
+
+    m_attackableTiles.clear();
 }
 
 bool Dungeon::isTileAtPosition(sf::Vector2f &position)
@@ -283,29 +283,40 @@ void Dungeon::populateWithEnemies()
 
 bool Dungeon::los(sf::Vector2f currentTile, sf::Vector2f targetTile)
 {
-    if (currentTile.x == targetTile.x && currentTile.y == targetTile.y)
-    { //tile is always in line-of-sight from itself
+    // TODO: still behaves differently if slope is 3 vs 1/3...
+    int tileIndex;
+    float currentX = currentTile.x + 50.0f, currentY = currentTile.y + 50.0f;
+    float targetX = targetTile.x + 50.0f, targetY = targetTile.y + 50.0f;
+    if (currentX == targetX)
+    {
+        // x is the same so there's no slope
+        // walk the tiles in the Y-direction
+        // checking whether each is invalid or collidable
+        while (currentY != targetY)
+        {
+            currentY += (currentY < targetY) ? c_losIncrement : c_losDecrement;
+            if (!isValidTile(sf::Vector2f{currentX, currentY}, tileIndex) || m_tiles[tileIndex].hasCollision())
+            {
+                return false;
+            }
+        }
+
         return true;
     }
 
-    float currentX = currentTile.x + 50.0f, currentY = currentTile.y + 50.0f;
-    float targetX = targetTile.x + 50.0f, targetY = targetTile.y + 50.0f;
-    float slope = (targetY - currentY) / (targetX - currentX);
-
     // walk the line from center of currentTile to the center of targetTile
     // checking whether each tile is invalid or collidable
-    bool isLOS = true;
-    int tileIndex;
-    while (isLOS && currentX < targetX)
+    float slope = (targetY - currentY) / (targetX - currentX);
+    while (currentX != targetX)
     {
-        currentX += c_tileWidthf;
+        currentX += (currentX < targetX) ? c_losIncrement : c_losDecrement;
         currentY = targetY - (slope * (targetX - currentX));
         if (!isValidTile(sf::Vector2f{currentX, currentY}, tileIndex) || m_tiles[tileIndex].hasCollision())
         {
-            isLOS = false;
+            return false;
         }
     }
-    return isLOS;
+    return true;
 }
 
 void Dungeon::initialize(int width, int height, Biome biome, sf::Texture &texture, sf::Texture &enemyTexture)

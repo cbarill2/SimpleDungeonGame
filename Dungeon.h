@@ -15,6 +15,8 @@ private:
     const int c_tileHeighti{100};
     const int c_tileMapWidth{8};
     const int c_tileMapHeight{1};
+    const float c_losIncrement{10.0f};
+    const float c_losDecrement{-10.0f};
 
     int m_numberOfTiles;
     std::map<int, int> m_movableTiles; // tile index, player speed remaining
