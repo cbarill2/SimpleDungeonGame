@@ -18,7 +18,7 @@ void Game::initialize()
 
 void Game::loadTextures()
 {
-    sf::Image image = ResourceLoader::LoadFromResource<sf::Image>("player");
+    sf::Image image = ResourceLoader::LoadFromResource<sf::Image>("player_spritesheet");
     m_playerTexture.loadFromImage(image);
     for (uint32_t i = 0; i < c_tileWidthi; ++i)
     {
@@ -31,10 +31,10 @@ void Game::loadTextures()
     }
     m_fadedPlayerTexture.loadFromImage(image);
 
-    image = ResourceLoader::LoadFromResource<sf::Image>("tiles");
+    image = ResourceLoader::LoadFromResource<sf::Image>("texture_tiles");
     m_dungeonTexture.loadFromImage(image);
 
-    image = ResourceLoader::LoadFromResource<sf::Image>("enemy");
+    image = ResourceLoader::LoadFromResource<sf::Image>("enemy_spritesheet");
     m_enemyTexture.loadFromImage(image);
     for (uint32_t i = 0; i < c_tileWidthi; ++i)
     {
@@ -49,10 +49,10 @@ void Game::loadTextures()
     }
     m_attackableEnemyTexture.loadFromImage(image);
 
-    image = ResourceLoader::LoadFromResource<sf::Image>("dice");
+    image = ResourceLoader::LoadFromResource<sf::Image>("texture_dice");
     m_diceTexture.loadFromImage(image);
 
-    image = ResourceLoader::LoadFromResource<sf::Image>("attack");
+    image = ResourceLoader::LoadFromResource<sf::Image>("texture_attacks");
     m_attackTexture.loadFromImage(image);
 }
 
@@ -422,7 +422,7 @@ void Game::processInput(sf::RenderWindow &window, sf::Event event)
     break;
     }
 
-    if (!m_dungeon.hasMovableTiles() && !currentPlayer.hasTarget() && (!m_dungeon.hasAttackableTiles() || !currentPlayer.canAttack()))
+    if (!m_dungeon.hasMovableTiles() && !currentPlayer.hasTarget() && (!currentPlayer.canAttack() || !m_dungeon.hasAttackableTiles()))
     {
         advanceTurn();
     }
