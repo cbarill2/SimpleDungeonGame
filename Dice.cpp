@@ -23,8 +23,3 @@ void Dice::resetPosition()
 {
     setPosition(m_homePosition);
 }
-
-std::string Dice::toString()
-{
-    return std::string{"D"}.append(std::to_string(m_numberOfSides));
-}

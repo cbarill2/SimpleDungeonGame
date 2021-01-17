@@ -1,14 +1,13 @@
-#include <SFML/Graphics.hpp>
 #include "Game.h"
 
 int main()
 {
     Game game{};
 
-    const int c_windowHeight = 768, c_windowWidth = 1024;
+    auto const c_windowHeight{768}, c_windowWidth{1024};
     sf::RenderWindow window{sf::VideoMode{c_windowWidth, c_windowHeight}, game.getName()};
 
-    while (game.isRunning())
+    while (window.isOpen() && game.isRunning())
     {
         sf::Event event;
         while (window.pollEvent(event))

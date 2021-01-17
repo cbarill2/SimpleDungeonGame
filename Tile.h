@@ -16,13 +16,13 @@ public:
     ~Tile() {}
 
     void setPosition(float x, float y, int xCoord, int yCoord);
-    int getX() { return getPosition().x; }
-    int getY() { return getPosition().y; }
-    int getXCoord() { return m_xCoord; }
-    int getYCoord() { return m_yCoord; }
+    auto getX() { return getPosition().x; }
+    auto getY() { return getPosition().y; }
+    auto getXCoord() { return m_xCoord; }
+    auto getYCoord() { return m_yCoord; }
     bool contains(float x, float y);
-    bool hasUnit() { return m_hasUnit; }
-    bool hasCollision() { return m_hasCollision; }
-    bool isDoor() { return m_isDoor; }
+    auto hasUnit() { return m_hasUnit; }
+    auto hasCollision() { return m_hasCollision; }
+    auto isDoor() { return m_isDoor; }
     void toggleUnit();
 };

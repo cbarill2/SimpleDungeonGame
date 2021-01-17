@@ -18,6 +18,6 @@ public:
     ~Dice() {}
     int roll();
     void resetPosition();
-    int getNumberOfSides() { return m_numberOfSides; }
-    std::string toString();
+    auto getNumberOfSides() { return m_numberOfSides; }
+    auto toString(){ return std::string{"D"}.append(std::to_string(m_numberOfSides)); }
 };

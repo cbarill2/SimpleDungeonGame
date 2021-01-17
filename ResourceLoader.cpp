@@ -4,8 +4,6 @@
 class ResourceLoader
 {
 private:
-    static const int c_tileWidthi{100};
-
 public:
     template <typename T>
     static T LoadFromResource(LPCSTR name)

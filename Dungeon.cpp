@@ -236,14 +236,12 @@ void Dungeon::generateProcedurally()
                         tileTextureIndex = 0;
                     }
 
-                    tileTextureIndex += ((int)m_biome * c_tileMapHeight * c_tileMapWidth);
-
                     m_tiles[tileIndex] = Tile{tileSize, tileTextureIndex % 2 == 1, tileTextureIndex == 2};
                     m_tiles[tileIndex].setTexture(m_texture);
                     m_tiles[tileIndex].setTextureRect(
                         sf::IntRect{
-                            c_tileWidthi * (tileTextureIndex % c_tileMapWidth),
-                            c_tileHeighti * (tileTextureIndex / c_tileMapWidth),
+                            c_tileWidthi * tileTextureIndex,
+                            c_tileHeighti * (int)m_biome * c_tileMapHeight,
                             c_tileWidthi,
                             c_tileHeighti});
                     m_tiles[tileIndex].setPosition(
