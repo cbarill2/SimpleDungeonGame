@@ -1,3 +1,4 @@
+#include <sstream>
 #include "Dice.h"
 
 #pragma once
@@ -17,20 +18,15 @@ private:
     int m_currentCost{1}, m_currentDamage{1}, m_level{1};
     int m_attackBonus{0}, m_attackDieSides;
     std::string m_attackDieString{"Roll a Die!"};
+    std::string m_name{"Attack"};
 
 public:
-    Attack() {}
-    Attack(int dieSides, int minRange, int maxRange, const sf::Texture &attackTexture, sf::IntRect textureRect)
-        : RectangleShape{sf::Vector2f{50.f, 50.f}}, m_attackDieSides{dieSides}, m_minRange{minRange}, m_maxRange{maxRange}, m_attackDieString{"Roll a D" + std::to_string(dieSides)}
-    {
-        setTexture(&attackTexture);
-        setTextureRect(textureRect);
-    }
-    ~Attack() {}
-    int getMinRange() { return m_minRange; }
-    int getMaxRange() { return m_maxRange; }
-    int getCost() { return m_currentCost; }
-    int getDamage() { return m_currentDamage; }
-    int getAttackDieSides() { return m_attackDieSides; }
-    std::string getAttackDieString() { return m_attackDieString; }
+    Attack(std::string data, const sf::Texture &attackTexture, sf::IntRect textureRect);
+    Attack(std::string name, int dieSides, int minRange, int maxRange, const sf::Texture &attackTexture, sf::IntRect textureRect);
+    auto getMinRange() { return m_minRange; }
+    auto getMaxRange() { return m_maxRange; }
+    auto getCost() { return m_currentCost; }
+    auto getDamage() { return m_currentDamage; }
+    auto getAttackDieSides() { return m_attackDieSides; }
+    auto getAttackDieString() { return m_attackDieString; }
 };

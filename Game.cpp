@@ -9,11 +9,14 @@ void Game::initialize()
     m_prng.seed128(m_prng.nextSplitMix64(), m_prng.nextSplitMix64());
 
     loadTextures();
+    loadAttackData();
     createPlayers();
     createDungeon();
     createDice();
     createTextObjects();
     createViews();
+
+    startTurn();
 }
 
 void Game::loadTextures()
@@ -56,11 +59,23 @@ void Game::loadTextures()
     m_attackTexture.loadFromImage(image);
 }
 
+void Game::loadAttackData()
+{
+    m_attackData.clear();
+    std::ifstream file{"..\\..\\data\\attacks.txt"};
+    std::string line;
+    int i = 0;
+    while(std::getline(file, line))
+    {
+        m_attackData.push_back(Attack{line, m_attackTexture, sf::IntRect{i++*c_tileWidthi, 0, c_tileWidthi, c_tileWidthi}});
+    }
+}
+
 void Game::createPlayers()
 {
     for (int i = 0; i < m_numberOfPlayers; ++i)
     {
-        m_players.push_back(Player{1, 0, m_playerTexture, m_fadedPlayerTexture, m_attackTexture});
+        m_players.push_back(Player{1, 0, m_playerTexture, m_fadedPlayerTexture, m_attackData});
     }
 }
 
@@ -70,9 +85,6 @@ void Game::createDungeon()
     int dungeonHeight{(int)m_prng.random_roll(41, 20)};
     m_dungeon.initialize(dungeonWidth, dungeonHeight, Dungeon::Biome::Forest, m_dungeonTexture, m_enemyTexture);
     m_dungeon.getTileAtPosition(currentPlayer.getPosition()).toggleUnit();
-    currentPlayer.startTurn();
-    m_dungeon.buildMovableTilesMap(currentPlayer.getPosition(), currentPlayer.getSpeed());
-    m_dungeon.buildAttackableTilesMap(currentPlayer.getPosition(), currentPlayer.getMinRange(), currentPlayer.getMaxRange());
 }
 
 void Game::createDice()
@@ -92,7 +104,6 @@ void Game::createTextObjects()
     m_turnText.setFont(m_font);
     m_turnText.setCharacterSize(50);
     m_turnText.setPosition(-10495, -10025);
-    m_turnText.setString("Move Player " + std::to_string(m_turnIndex + 1));
     m_attackText.setFont(m_font);
     m_attackText.setCharacterSize(20);
     m_attackText.setFillColor(sf::Color::Black);
@@ -123,6 +134,7 @@ void Game::createViews()
 void Game::reset()
 {
     m_dungeon.reset();
+    loadAttackData();
     for (auto &player : m_players)
     {
         player.reset();
@@ -130,13 +142,7 @@ void Game::reset()
 
     m_turnIndex = 0;
     m_dungeon.getTileAtPosition(currentPlayer.getPosition()).toggleUnit();
-    currentPlayer.startTurn();
-    m_dungeon.clearMovableTiles();
-    m_dungeon.buildMovableTilesMap(currentPlayer.getPosition(), currentPlayer.getSpeed());
-    m_dungeon.buildAttackableTilesMap(currentPlayer.getPosition(), currentPlayer.getMinRange(), currentPlayer.getMaxRange());
-    m_playAreaView.setCenter(currentPlayer.getPosition());
-    m_isRolling = false;
-    m_turnText.setString("Move Player " + std::to_string(m_turnIndex + 1));
+    startTurn();
 }
 
 bool Game::tryGrabDie(sf::Vector2f clickPosition)
@@ -231,7 +237,11 @@ void Game::advanceTurn()
     {
         m_turnIndex = 0;
     }
+    startTurn();
+}
 
+void Game::startTurn()
+{
     currentPlayer.startTurn();
     m_dungeon.clearMovableTiles();
     m_dungeon.buildMovableTilesMap(currentPlayer.getPosition(), currentPlayer.getSpeed());

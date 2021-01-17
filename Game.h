@@ -1,4 +1,5 @@
 #include <SFML/Graphics.hpp>
+#include <fstream>
 #include "ResourceLoader.cpp"
 #include "Dungeon.h"
 #include "Player.h"
@@ -21,8 +22,9 @@ private:
     int m_numberOfPlayers{0}, m_turnIndex{0}, m_lastRoll{0};
 
     Dungeon m_dungeon;
-    std::vector<Unit> m_players;
+    std::vector<Player> m_players;
     std::vector<Dice> m_dice;
+    std::vector<Attack> m_attackData;
     std::map<int, Enemy> m_enemies;
     PRNG m_prng{};
     Dice *m_heldDie{nullptr};
@@ -36,6 +38,7 @@ private:
 
     void initialize();
     void loadTextures();
+    void loadAttackData();
     void createPlayers();
     void createDungeon();
     void createDice();
@@ -43,6 +46,7 @@ private:
     void createViews();
     void reset();
     void advanceTurn();
+    void startTurn();
     void zoom(float delta);
     bool tryGrabDie(sf::Vector2f clickPosition);
     void selectTile(sf::Vector2f clickPosition);

@@ -70,7 +70,9 @@ void Dungeon::buildAttackableTilesMap(sf::Vector2f playerPosition, int minRange,
     clearAttackableTiles();
 
     if (maxRange == 0)
+    {
         return; //maxRange 0 means targeting self?
+    }
     int tileIndex;
 
     // for each tile in range, is it: valid, has a live enemy, and in LOS
@@ -274,7 +276,7 @@ void Dungeon::populateWithEnemies()
     {
         if (prng.random_roll(50) == 1 && !m_tiles[i].hasCollision() && !m_tiles[i].hasUnit())
         {
-            m_enemies.insert(std::pair<int, Enemy>(i, Enemy{m_tiles[i].getXCoord(), m_tiles[i].getYCoord(), *m_enemyTexture, *m_enemyTexture, *m_enemyTexture}));
+            m_enemies.insert(std::pair<int, Enemy>(i, Enemy{m_tiles[i].getXCoord(), m_tiles[i].getYCoord(), *m_enemyTexture, *m_enemyTexture}));
             m_tiles[i].toggleUnit();
             --remainingEnemies;
         }
