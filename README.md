@@ -4,6 +4,7 @@ A tile-based, turn-based RPG with simple mechanics to digitize tabletop gaming f
 ### Functional Features
 - Procedurally-generated game board and enemies
 - Players click highlighted tiles to move, click highlighted enemies to attack
+- Select from multiple attacks based on range and available attack points
 - "Rollable" dice (drag-and-drop to get a result)
 - "Programmer Art" with simple animations
 

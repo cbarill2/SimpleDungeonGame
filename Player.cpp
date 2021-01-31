@@ -1,18 +1,26 @@
 #include "Player.h"
 
-Player::Player(int x, int y, sf::Texture &activeTexture, sf::Texture &inactiveTexture, std::vector<Attack> &attacks)
-    : Unit{x, y, activeTexture, inactiveTexture, true}, m_maxAttackPoints{1}, m_currentAttackPoints{1}, m_minRange{1}, m_maxRange{1}
+Player::Player(int x, int y, const sf::Texture &activeTexture, const sf::Texture &inactiveTexture, std::vector<Attack> &attacks)
+    : Unit{x, y, activeTexture, inactiveTexture, true}, m_maxAttackPoints{2}, m_currentAttackPoints{m_maxAttackPoints}, m_minRange{1}, m_maxRange{1}
 {
     m_attacks = &attacks;
-    for (auto &&attack : *m_attacks)
+    m_attackMaxRanges = std::vector<int>(m_currentAttackPoints + 1, 0);
+}
+
+void Player::updateRanges()
+{
+    for (auto const &attack : *m_attacks)
     {
-        if (attack.getMinRange() < m_minRange)
+        if (attack.getCost() <= m_currentAttackPoints)
         {
-            m_minRange = attack.getMinRange();
-        }
-        if (attack.getMaxRange() > m_maxRange)
-        {
-            m_maxRange = attack.getMaxRange();
+            if (attack.getMinRange() < m_minRange)
+            {
+                m_minRange = attack.getMinRange();
+            }
+            if (attack.getMaxRange() > m_attackMaxRanges[attack.getCost()])
+            {
+                m_attackMaxRanges[attack.getCost()] = attack.getMaxRange();
+            }
         }
     }
 }
@@ -89,6 +97,7 @@ void Player::startTurn()
 {
     Unit::startTurn();
     m_currentAttackPoints = m_maxAttackPoints;
+    updateRanges();
     clearTarget();
 }
 
