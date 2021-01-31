@@ -1,6 +1,8 @@
 #include <SFML/Graphics.hpp>
 #include <windows.h>
 
+#pragma once
+
 class ResourceLoader
 {
 private:

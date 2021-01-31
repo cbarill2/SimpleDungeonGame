@@ -16,13 +16,12 @@ public:
     ~Tile() {}
 
     void setPosition(float x, float y, int xCoord, int yCoord);
-    auto getX() { return getPosition().x; }
-    auto getY() { return getPosition().y; }
-    auto getXCoord() { return m_xCoord; }
-    auto getYCoord() { return m_yCoord; }
-    bool contains(float x, float y);
-    auto hasUnit() { return m_hasUnit; }
-    auto hasCollision() { return m_hasCollision; }
-    auto isDoor() { return m_isDoor; }
+    auto getX() const { return getPosition().x; }
+    auto getY() const { return getPosition().y; }
+    auto getXCoord() const { return m_xCoord; }
+    auto getYCoord() const { return m_yCoord; }
+    auto hasUnit() const { return m_hasUnit; }
+    auto hasCollision() const { return m_hasCollision; }
+    auto isDoor() const { return m_isDoor; }
     void toggleUnit();
 };

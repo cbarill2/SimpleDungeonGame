@@ -19,7 +19,7 @@ Player::Player(int x, int y, sf::Texture &activeTexture, sf::Texture &inactiveTe
 
 bool Player::chooseAttack(sf::Vector2f clickPosition)
 {
-    for (auto &&attack : *m_attacks)
+    for (auto const &attack : *m_attacks)
     {
         if (attack.getGlobalBounds().contains(clickPosition))
         {
@@ -34,6 +34,7 @@ bool Player::chooseAttack(sf::Vector2f clickPosition)
 void Player::stopAttack()
 {
     m_isAttacking = false;
+    m_selectedAttack = nullptr;
 }
 
 AttackResult Player::finishAttack(int attackRoll)
@@ -67,7 +68,7 @@ AttackResult Player::finishAttack(int attackRoll)
     return result;
 }
 
-int Player::getDistanceFromTarget(Unit &target)
+int Player::getDistanceFromTarget(Unit &target) const
 {
     return abs(getXCoord() - target.getXCoord()) + abs(getYCoord() - target.getYCoord());
 }
@@ -98,7 +99,7 @@ void Player::endTurn()
     stopAttack();
 }
 
-void Player::draw(sf::RenderWindow &window)
+void Player::draw(sf::RenderWindow &window) const
 {
     window.draw(*this);
     if (m_hasTarget && !m_isAttacking)
@@ -107,9 +108,9 @@ void Player::draw(sf::RenderWindow &window)
         int j = 0;
         for (auto &&attack : *m_attacks)
         {
-            if (attack.getMinRange() <= targetDistance && attack.getMaxRange() >= targetDistance)
+            if (attack.getCost() <= m_currentAttackPoints && attack.getMinRange() <= targetDistance && attack.getMaxRange() >= targetDistance)
             {
-                attack.setPosition(getPosition().x - (c_attackTileWidth * (j++ + 1)), getPosition().y - c_attackTileWidth);
+                attack.setPosition(getPosition().x - (c_attackTileWidth * (++j)), getPosition().y - c_attackTileWidth);
                 window.draw(attack);
             }
         }

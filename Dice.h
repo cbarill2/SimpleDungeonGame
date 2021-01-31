@@ -16,8 +16,10 @@ public:
     Dice() : Sprite{} {}
     Dice(int numberOfSides, sf::Texture &texture, sf::IntRect textureRect, sf::Vector2f position);
     ~Dice() {}
+
     int roll();
+    void update() {}
     void resetPosition();
-    auto getNumberOfSides() { return m_numberOfSides; }
-    auto toString(){ return std::string{"D"}.append(std::to_string(m_numberOfSides)); }
+    auto getNumberOfSides() const { return m_numberOfSides; }
+    auto toString() const { return std::string{"D"}.append(std::to_string(m_numberOfSides)); }
 };

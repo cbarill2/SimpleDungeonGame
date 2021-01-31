@@ -45,16 +45,15 @@ void Unit::moveToCoords(int x, int y, int newSpeed)
 void Unit::startTurn()
 {
     m_currentSpeed = m_maxSpeed;
-    m_isSelected = true;
+    m_active = true;
     setTexture(*m_activeTexture);
-    setTextureRect(sf::IntRect{0, 100, 100, 100});
 }
 
 void Unit::endTurn()
 {
-    m_isSelected = false;
+    m_active = false;
     setTexture(*m_inactiveTexture);
-    setTextureRect(sf::IntRect{0, 0, 100, 100});
+    setTextureRect(sf::IntRect{0, 0, c_animFrameWidth, c_animFrameHeight});
 }
 
 int Unit::takeDamage(int amount)
@@ -84,7 +83,28 @@ void Unit::reset()
     moveToCoords(m_startingCoords.x, m_startingCoords.y, m_maxSpeed);
 }
 
-void Unit::draw(sf::RenderWindow &window)
+void Unit::update()
+{
+    if (m_alive && (m_active || !m_player))
+    {
+        if (m_animClock.getElapsedTime().asMilliseconds() > m_animDuration)
+        {
+            advanceAnimation();
+            m_animClock.restart();
+        }
+    }
+}
+
+void Unit::advanceAnimation()
+{
+    if (++m_currentAnimFrame >= c_animMaxFrames)
+    {
+        m_currentAnimFrame = 0;
+    }
+    setTextureRect(sf::IntRect{m_currentAnimFrame * 100, 0, c_animFrameWidth, c_animFrameHeight});
+}
+
+void Unit::draw(sf::RenderWindow &window) const
 {
     window.draw(*this);
 }

@@ -1,23 +1,31 @@
 #include "Dungeon.h"
 
+void Dungeon::update()
+{
+    for (auto const &tileIndex : m_attackableTiles)
+    {
+        getEnemyOnTile(tileIndex).update();
+    }
+}
+
 void Dungeon::draw(sf::RenderWindow &window)
 {
-    for (const auto &indexSpeedPair : m_movableTiles)
+    for (auto const &indexSpeedPair : m_movableTiles)
     {
         m_tiles[indexSpeedPair.first].setFillColor(sf::Color::Cyan);
     }
 
-    for (int i = 0; i < m_numberOfTiles; ++i)
+    for (int tileIndex = 0; tileIndex < m_numberOfTiles; ++tileIndex)
     {
-        window.draw(m_tiles[i]);
+        window.draw(m_tiles[tileIndex]);
     }
 
-    for (auto &&indexEnemyPair : m_enemies)
+    for (auto const &indexEnemyPair : m_enemies)
     {
         window.draw(indexEnemyPair.second);
     }
 
-    for (const auto &indexSpeedPair : m_movableTiles)
+    for (auto const &indexSpeedPair : m_movableTiles)
     {
         m_tiles[indexSpeedPair.first].setFillColor(sf::Color::White);
     }
@@ -52,7 +60,7 @@ void Dungeon::clearMovableTiles()
     m_movableTiles.clear();
 }
 
-bool Dungeon::isMovableTile(int tileIndex, int &speedLeft)
+bool Dungeon::isMovableTile(int tileIndex, int &speedLeft) const
 {
     auto search = m_movableTiles.find(tileIndex);
     bool found = (search != m_movableTiles.end());
@@ -60,7 +68,7 @@ bool Dungeon::isMovableTile(int tileIndex, int &speedLeft)
     return found;
 }
 
-bool Dungeon::isAttackableTile(int tileIndex)
+bool Dungeon::isAttackableTile(int tileIndex) const
 {
     return std::find(m_attackableTiles.begin(), m_attackableTiles.end(), tileIndex) != m_attackableTiles.end();
 }
@@ -76,16 +84,16 @@ void Dungeon::buildAttackableTilesMap(sf::Vector2f playerPosition, int minRange,
     int tileIndex;
 
     // for each tile in range, is it: valid, has a live enemy, and in LOS
-    for (int i = playerPosition.x - maxRange; i <= playerPosition.x + maxRange; i += c_tileWidthi)
+    for (int x = playerPosition.x - maxRange; x <= playerPosition.x + maxRange; x += c_tileWidthi)
     {
-        for (int j = playerPosition.y - maxRange; j <= playerPosition.y + maxRange; j += c_tileHeighti)
+        for (int y = playerPosition.y - maxRange; y <= playerPosition.y + maxRange; y += c_tileHeighti)
         {
-            int dist = abs(playerPosition.x - i) + abs(playerPosition.y - j);
-            if (dist <= maxRange && dist >= minRange && isValidTile(sf::Vector2f{(float)i, (float)j}, tileIndex) && m_tiles[tileIndex].hasUnit())
+            int dist = abs(playerPosition.x - x) + abs(playerPosition.y - y);
+            if (dist <= maxRange && dist >= minRange && isValidTile(sf::Vector2f{(float)x, (float)y}, tileIndex) && m_tiles[tileIndex].hasUnit())
             {
                 auto search = m_enemies.find(tileIndex);
                 if (search != m_enemies.end() && search->second.isAlive() &&
-                    los(playerPosition, sf::Vector2f{(float)i, (float)j}))
+                    los(playerPosition, sf::Vector2f{(float)x, (float)y}))
                 {
                     m_attackableTiles.push_back(tileIndex);
                     m_tiles[tileIndex].setFillColor(sf::Color::Red);
@@ -97,15 +105,15 @@ void Dungeon::buildAttackableTilesMap(sf::Vector2f playerPosition, int minRange,
 
 void Dungeon::clearAttackableTiles()
 {
-    for (auto &&tile : m_attackableTiles)
+    for (auto const &tileIndex : m_attackableTiles)
     {
-        m_tiles[tile].setFillColor(sf::Color::White);
+        m_tiles[tileIndex].setFillColor(sf::Color::White);
     }
 
     m_attackableTiles.clear();
 }
 
-bool Dungeon::isTileAtPosition(sf::Vector2f &position)
+bool Dungeon::isTileAtPosition(sf::Vector2f &position) const
 {
     int tileIndex;
     if (isValidTile(position, tileIndex))
@@ -116,7 +124,7 @@ bool Dungeon::isTileAtPosition(sf::Vector2f &position)
     return false;
 }
 
-bool Dungeon::tileHasUnit(sf::Vector2f position)
+bool Dungeon::tileHasUnit(sf::Vector2f position) const
 {
     int tileIndex;
     if (isValidTile(position, tileIndex))
@@ -132,7 +140,7 @@ Tile &Dungeon::getTileAtPosition(sf::Vector2f position)
     return m_tiles[tileIndex];
 }
 
-bool Dungeon::isValidTile(sf::Vector2f position, int &tileIndex)
+bool Dungeon::isValidTile(sf::Vector2f position, int &tileIndex) const
 {
     if (position.x < 0 || position.x >= m_width * c_tileWidthf || position.y < 0 || position.y >= m_height * c_tileHeightf)
     {
@@ -274,14 +282,15 @@ void Dungeon::populateWithEnemies()
     {
         if (prng.random_roll(50) == 1 && !m_tiles[i].hasCollision() && !m_tiles[i].hasUnit())
         {
-            m_enemies.insert(std::pair<int, Enemy>(i, Enemy{m_tiles[i].getXCoord(), m_tiles[i].getYCoord(), *m_enemyTexture, *m_enemyTexture}));
+            auto ref = m_enemies.try_emplace(i, m_tiles[i].getXCoord(), m_tiles[i].getYCoord(), *m_enemyTexture, *m_enemyTexture);
+            assert(ref.second);
             m_tiles[i].toggleUnit();
             --remainingEnemies;
         }
     }
 }
 
-bool Dungeon::los(sf::Vector2f currentTile, sf::Vector2f targetTile)
+bool Dungeon::los(sf::Vector2f currentTile, sf::Vector2f targetTile) const
 {
     // TODO: still behaves differently if slope is 3 vs 1/3...
     int tileIndex;
@@ -319,16 +328,20 @@ bool Dungeon::los(sf::Vector2f currentTile, sf::Vector2f targetTile)
     return true;
 }
 
-void Dungeon::initialize(int width, int height, Biome biome, sf::Texture &texture, sf::Texture &enemyTexture)
+void Dungeon::initialize(int width, int height, Biome biome)
 {
     m_width = width;
     m_height = height;
     m_numberOfTiles = m_width * m_height;
     m_biome = biome;
-    m_texture = &texture;
-    m_enemyTexture = &enemyTexture;
     m_tiles = new Tile[m_numberOfTiles];
 
     generateProcedurally();
     populateWithEnemies();
+}
+
+void Dungeon::setTextures(sf::Texture &dungeonTexture, sf::Texture &enemyTexture)
+{
+    m_texture = &dungeonTexture;
+    m_enemyTexture = &enemyTexture;
 }
