@@ -1,4 +1,5 @@
 #include <SFML/Graphics.hpp>
+#include "Constants.h"
 #include "Unit.h"
 
 #pragma once
@@ -6,7 +7,6 @@
 class Player : public Unit
 {
 private:
-    const float c_attackTileWidth = 50.f;
     const int c_xpToLevel[5] = {5, 10, 25, 50, 100};
     std::vector<Attack> *m_attacks;
     std::vector<int> m_attackMaxRanges;

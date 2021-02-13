@@ -4,14 +4,13 @@
 #include "Tile.h"
 #include "Enemy.h"
 #include "PRNG.h"
+#include "Constants.h"
 
 #pragma once
 
 class Dungeon
 {
 private:
-    const float c_tileWidthf{100.0f}, c_tileHeightf{100.0f};
-    const int c_tileWidthi{100}, c_tileHeighti{100};
     const int c_tileMapWidth{8}, c_tileMapHeight{1};
     const float c_losIncrement{10.0f}, c_losDecrement{-10.0f};
 

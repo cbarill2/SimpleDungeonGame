@@ -1,5 +1,6 @@
 #include <SFML/Graphics.hpp>
 #include <fstream>
+#include "Constants.h"
 #include "ResourceLoader.cpp"
 #include "Dungeon.h"
 #include "Player.h"
@@ -17,9 +18,8 @@ private:
     const sf::String c_name{"Simple Dungeon Game"};
     sf::RenderWindow m_window{sf::VideoMode{c_windowWidth, c_windowHeight}, c_name};
 
-    const float c_diceX{-4950.0f}, c_d6Y{-4950.0f}, c_d8Y{-4800.0f}, c_d10Y{-4650.0f}, c_d12Y{-4500.0f};
-    const float c_tileWidthf{100.0f}, c_diceViewScale{15.0f}, c_playViewScale{10.0f};
-    const int c_tileWidthi{100};
+    const float c_diceX{-4950.f}, c_d6Y{-4950.f}, c_d8Y{-4800.f}, c_d10Y{-4650.f}, c_d12Y{-4500.f};
+    const float c_diceViewScale{15.f}, c_playViewScale{10.f};
     const sf::Vector2f c_vectorf5050{50.0f, 50.0f};
     bool m_isRunning{true}, m_isRolling{false}, m_isAttacking{false};
     int m_numberOfPlayers{0}, m_turnIndex{0}, m_lastRoll{0};

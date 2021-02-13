@@ -39,10 +39,10 @@ void Dungeon::buildMovableTilesMap(sf::Vector2f playerPosition, int playerSpeed)
     {
         if (playerSpeed > 0)
         {
-            buildMovableTilesMap(sf::Vector2f{playerPosition.x, playerPosition.y + c_tileHeightf}, playerSpeed - 1);
-            buildMovableTilesMap(sf::Vector2f{playerPosition.x - c_tileWidthf, playerPosition.y}, playerSpeed - 1);
-            buildMovableTilesMap(sf::Vector2f{playerPosition.x + c_tileWidthf, playerPosition.y}, playerSpeed - 1);
-            buildMovableTilesMap(sf::Vector2f{playerPosition.x, playerPosition.y - c_tileHeightf}, playerSpeed - 1);
+            buildMovableTilesMap(sf::Vector2f{playerPosition.x, playerPosition.y + simpleConst::tileWidthf}, playerSpeed - 1);
+            buildMovableTilesMap(sf::Vector2f{playerPosition.x - simpleConst::tileWidthf, playerPosition.y}, playerSpeed - 1);
+            buildMovableTilesMap(sf::Vector2f{playerPosition.x + simpleConst::tileWidthf, playerPosition.y}, playerSpeed - 1);
+            buildMovableTilesMap(sf::Vector2f{playerPosition.x, playerPosition.y - simpleConst::tileWidthf}, playerSpeed - 1);
         }
         if (!m_tiles[tileIndex].hasUnit())
         {
@@ -84,9 +84,9 @@ void Dungeon::buildAttackableTilesMap(sf::Vector2f playerPosition, int minRange,
     int tileIndex;
 
     // for each tile in range, is it: valid, has a live enemy, and in LOS
-    for (int x = playerPosition.x - maxRange; x <= playerPosition.x + maxRange; x += c_tileWidthi)
+    for (int x = playerPosition.x - maxRange; x <= playerPosition.x + maxRange; x += simpleConst::tileWidthi)
     {
-        for (int y = playerPosition.y - maxRange; y <= playerPosition.y + maxRange; y += c_tileHeighti)
+        for (int y = playerPosition.y - maxRange; y <= playerPosition.y + maxRange; y += simpleConst::tileWidthi)
         {
             int dist = abs(playerPosition.x - x) + abs(playerPosition.y - y);
             if (dist <= maxRange && dist >= minRange && isValidTile(sf::Vector2f{(float)x, (float)y}, tileIndex) && m_tiles[tileIndex].hasUnit())
@@ -136,17 +136,17 @@ bool Dungeon::tileHasUnit(sf::Vector2f position) const
 
 Tile &Dungeon::getTileAtPosition(sf::Vector2f position)
 {
-    int tileIndex = ((int)(position.y / c_tileHeightf) * m_width) + (int)(position.x / c_tileWidthf);
+    int tileIndex = ((int)(position.y / simpleConst::tileWidthf) * m_width) + (int)(position.x / simpleConst::tileWidthf);
     return m_tiles[tileIndex];
 }
 
 bool Dungeon::isValidTile(sf::Vector2f position, int &tileIndex) const
 {
-    if (position.x < 0 || position.x >= m_width * c_tileWidthf || position.y < 0 || position.y >= m_height * c_tileHeightf)
+    if (position.x < 0 || position.x >= m_width * simpleConst::tileWidthf || position.y < 0 || position.y >= m_height * simpleConst::tileWidthf)
     {
         return false;
     }
-    tileIndex = ((int)(position.y / c_tileHeightf) * m_width) + (int)(position.x / c_tileWidthf);
+    tileIndex = ((int)(position.y / simpleConst::tileWidthf) * m_width) + (int)(position.x / simpleConst::tileWidthf);
     return (tileIndex >= 0 && tileIndex < m_numberOfTiles);
 }
 
@@ -169,7 +169,7 @@ void Dungeon::reset()
 void Dungeon::generateProcedurally()
 {
     int *heights{new int[m_width]{0}};
-    sf::Vector2f tileSize{c_tileWidthf, c_tileHeightf};
+    sf::Vector2f tileSize{simpleConst::tileWidthf, simpleConst::tileWidthf};
     PRNG prng{};
     prng.seed64(1);
     prng.seed128(prng.nextSplitMix64(), prng.nextSplitMix64());
@@ -248,13 +248,13 @@ void Dungeon::generateProcedurally()
                     m_tiles[tileIndex].setTexture(m_texture);
                     m_tiles[tileIndex].setTextureRect(
                         sf::IntRect{
-                            c_tileWidthi * tileTextureIndex,
-                            c_tileHeighti * (int)m_biome * c_tileMapHeight,
-                            c_tileWidthi,
-                            c_tileHeighti});
+                            simpleConst::tileWidthi * tileTextureIndex,
+                            simpleConst::tileWidthi * (int)m_biome * c_tileMapHeight,
+                            simpleConst::tileWidthi,
+                            simpleConst::tileWidthi});
                     m_tiles[tileIndex].setPosition(
-                        c_tileWidthf * (tileIndex % m_width),
-                        c_tileHeightf * (tileIndex / m_width),
+                        simpleConst::tileWidthf * (tileIndex % m_width),
+                        simpleConst::tileWidthf * (tileIndex / m_width),
                         (tileIndex % m_width),
                         (tileIndex / m_width));
 

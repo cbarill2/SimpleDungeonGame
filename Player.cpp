@@ -119,7 +119,7 @@ void Player::draw(sf::RenderWindow &window) const
         {
             if (attack.getCost() <= m_currentAttackPoints && attack.getMinRange() <= targetDistance && attack.getMaxRange() >= targetDistance)
             {
-                attack.setPosition(getPosition().x - (c_attackTileWidth * (++j)), getPosition().y - c_attackTileWidth);
+                attack.setPosition(getPosition().x - (simpleConst::attackTileWidthf * (++j)), getPosition().y - simpleConst::attackTileWidthf);
                 window.draw(attack);
             }
         }

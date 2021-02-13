@@ -28,9 +28,9 @@ void Game::loadTextures()
 {
     sf::Image image = ResourceLoader::LoadFromResource<sf::Image>("player_spritesheet");
     m_playerTexture.loadFromImage(image);
-    for (uint32_t x = 0; x < c_tileWidthi; ++x)
+    for (uint32_t x = 0; x < simpleConst::tileWidthi; ++x)
     {
-        for (uint32_t y = 0; y < c_tileWidthi; ++y)
+        for (uint32_t y = 0; y < simpleConst::tileWidthi; ++y)
         {
             sf::Color c = image.getPixel(x, y);
             c.a *= 0.65;
@@ -44,9 +44,9 @@ void Game::loadTextures()
 
     image = ResourceLoader::LoadFromResource<sf::Image>("enemy_spritesheet");
     m_enemyTexture.loadFromImage(image);
-    for (uint32_t x = 0; x < c_tileWidthi; ++x)
+    for (uint32_t x = 0; x < simpleConst::tileWidthi; ++x)
     {
-        for (uint32_t y = 0; y < c_tileWidthi; ++y)
+        for (uint32_t y = 0; y < simpleConst::tileWidthi; ++y)
         {
             sf::Color c = image.getPixel(x, y);
             if (c.a <= 10)
@@ -71,7 +71,7 @@ void Game::loadAttackData()
     int index = 0;
     while (std::getline(file, line))
     {
-        m_attackData.emplace_back(line, m_attackTexture, sf::IntRect{index++ * c_tileWidthi, 0, c_tileWidthi, c_tileWidthi});
+        m_attackData.emplace_back(line, m_attackTexture, sf::IntRect{index++ * simpleConst::tileWidthi, 0, simpleConst::tileWidthi, simpleConst::tileWidthi});
     }
 }
 
@@ -94,10 +94,10 @@ void Game::createDungeon()
 
 void Game::createDice()
 {
-    m_dice.emplace_back(6, m_diceTexture, sf::IntRect{0 * c_tileWidthi, 0, c_tileWidthi, c_tileWidthi}, sf::Vector2f{c_diceX, c_d6Y});
-    m_dice.emplace_back(8, m_diceTexture, sf::IntRect{1 * c_tileWidthi, 0, c_tileWidthi, c_tileWidthi}, sf::Vector2f{c_diceX, c_d8Y});
-    m_dice.emplace_back(10, m_diceTexture, sf::IntRect{2 * c_tileWidthi, 0, c_tileWidthi, c_tileWidthi}, sf::Vector2f{c_diceX, c_d10Y});
-    m_dice.emplace_back(12, m_diceTexture, sf::IntRect{3 * c_tileWidthi, 0, c_tileWidthi, c_tileWidthi}, sf::Vector2f{c_diceX, c_d12Y});
+    m_dice.emplace_back(6, m_diceTexture, sf::IntRect{0 * simpleConst::tileWidthi, 0, simpleConst::tileWidthi, simpleConst::tileWidthi}, sf::Vector2f{c_diceX, c_d6Y});
+    m_dice.emplace_back(8, m_diceTexture, sf::IntRect{1 * simpleConst::tileWidthi, 0, simpleConst::tileWidthi, simpleConst::tileWidthi}, sf::Vector2f{c_diceX, c_d8Y});
+    m_dice.emplace_back(10, m_diceTexture, sf::IntRect{2 * simpleConst::tileWidthi, 0, simpleConst::tileWidthi, simpleConst::tileWidthi}, sf::Vector2f{c_diceX, c_d10Y});
+    m_dice.emplace_back(12, m_diceTexture, sf::IntRect{3 * simpleConst::tileWidthi, 0, simpleConst::tileWidthi, simpleConst::tileWidthi}, sf::Vector2f{c_diceX, c_d12Y});
 }
 
 void Game::createTextObjects()
@@ -114,15 +114,15 @@ void Game::createTextObjects()
 void Game::createViews()
 {
     m_playAreaView.setCenter(sf::Vector2f{300.0f, 300.0f});
-    m_playAreaView.setSize(sf::Vector2f{c_playViewScale * c_tileWidthf, c_playViewScale * c_tileWidthf});
+    m_playAreaView.setSize(sf::Vector2f{c_playViewScale * simpleConst::tileWidthf, c_playViewScale * simpleConst::tileWidthf});
     m_playAreaView.setViewport(sf::FloatRect{0.0f, 0.0f, 1.0f, 0.9f});
 
     m_diceView.setCenter(sf::Vector2f{-5600.0f, -4600.0f});
-    m_diceView.setSize(sf::Vector2f{c_diceViewScale * c_tileWidthf, c_diceViewScale * c_tileWidthf});
+    m_diceView.setSize(sf::Vector2f{c_diceViewScale * simpleConst::tileWidthf, c_diceViewScale * simpleConst::tileWidthf});
     m_diceView.setViewport(sf::FloatRect{0.0f, 0.0f, 1.0f, 1.0f});
 
     m_hudView.setCenter(sf::Vector2f{-10000.0f, -10000.0f});
-    m_hudView.setSize(sf::Vector2f{10 * c_tileWidthf, 1 * c_tileWidthf});
+    m_hudView.setSize(sf::Vector2f{10 * simpleConst::tileWidthf, 1 * simpleConst::tileWidthf});
     m_hudView.setViewport(sf::FloatRect{0.0f, 0.9f, 1.0f, 0.1f});
 }
 
@@ -155,8 +155,8 @@ bool Game::tryGrabDie(sf::Vector2f clickPosition)
 
 void Game::selectTile(sf::Vector2f clickPosition)
 {
-    int xCoord{(int)(clickPosition.x / c_tileWidthi)};
-    int yCoord{(int)(clickPosition.y / c_tileWidthi)};
+    int xCoord{(int)(clickPosition.x / simpleConst::tileWidthi)};
+    int yCoord{(int)(clickPosition.y / simpleConst::tileWidthi)};
 
     if (xCoord >= 0 && xCoord < m_dungeon.getWidth() &&
         yCoord >= 0 && yCoord < m_dungeon.getHeight())
@@ -197,31 +197,31 @@ void Game::zoom(float delta)
     float viewX = m_playAreaView.getSize().x;
     sf::Vector2f playAreaCenter = m_playAreaView.getCenter();
 
-    if (delta < 0 && viewX < 24 * c_tileWidthf)
+    if (delta < 0 && viewX < 24 * simpleConst::tileWidthf)
     {
-        m_playAreaView.zoom(1 + (2 * c_tileWidthf / viewX));
+        m_playAreaView.zoom(1 + (2 * simpleConst::tileWidthf / viewX));
     }
-    else if (delta > 0 && viewX >= 10 * c_tileWidthf)
+    else if (delta > 0 && viewX >= 10 * simpleConst::tileWidthf)
     {
-        m_playAreaView.zoom((viewX - (2 * c_tileWidthf)) / viewX);
+        m_playAreaView.zoom((viewX - (2 * simpleConst::tileWidthf)) / viewX);
     }
 
-    if (playAreaCenter.x < (2 * c_tileWidthf))
+    if (playAreaCenter.x < (2 * simpleConst::tileWidthf))
     {
         m_playAreaView.setCenter(0.0f, playAreaCenter.y);
     }
-    else if (playAreaCenter.x > (m_dungeon.getWidth() - 1) * c_tileWidthf)
+    else if (playAreaCenter.x > (m_dungeon.getWidth() - 1) * simpleConst::tileWidthf)
     {
-        m_playAreaView.setCenter(m_dungeon.getWidth() * c_tileWidthf, playAreaCenter.y);
+        m_playAreaView.setCenter(m_dungeon.getWidth() * simpleConst::tileWidthf, playAreaCenter.y);
     }
 
-    if (playAreaCenter.y < (2 * c_tileWidthf))
+    if (playAreaCenter.y < (2 * simpleConst::tileWidthf))
     {
         m_playAreaView.setCenter(playAreaCenter.x, 0.0f);
     }
-    else if (playAreaCenter.y > (m_dungeon.getHeight() - 1) * c_tileWidthf)
+    else if (playAreaCenter.y > (m_dungeon.getHeight() - 1) * simpleConst::tileWidthf)
     {
-        m_playAreaView.setCenter(playAreaCenter.x, m_dungeon.getHeight() * c_tileWidthf);
+        m_playAreaView.setCenter(playAreaCenter.x, m_dungeon.getHeight() * simpleConst::tileWidthf);
     }
 }
 
@@ -284,33 +284,33 @@ void Game::processInput()
             break;
             case sf::Keyboard::W:
             {
-                if (m_playAreaView.getCenter().y > (3 * c_tileWidthf))
+                if (m_playAreaView.getCenter().y > (3 * simpleConst::tileWidthf))
                 {
-                    m_playAreaView.move(0.0f, -c_tileWidthf);
+                    m_playAreaView.move(0.0f, -simpleConst::tileWidthf);
                 }
             }
             break;
             case sf::Keyboard::A:
             {
-                if (m_playAreaView.getCenter().x > (3 * c_tileWidthf))
+                if (m_playAreaView.getCenter().x > (3 * simpleConst::tileWidthf))
                 {
-                    m_playAreaView.move(-c_tileWidthf, 0.0f);
+                    m_playAreaView.move(-simpleConst::tileWidthf, 0.0f);
                 }
             }
             break;
             case sf::Keyboard::S:
             {
-                if (m_playAreaView.getCenter().y < ((m_dungeon.getHeight() - 3) * c_tileWidthf))
+                if (m_playAreaView.getCenter().y < ((m_dungeon.getHeight() - 3) * simpleConst::tileWidthf))
                 {
-                    m_playAreaView.move(0.0f, c_tileWidthf);
+                    m_playAreaView.move(0.0f, simpleConst::tileWidthf);
                 }
             }
             break;
             case sf::Keyboard::D:
             {
-                if (m_playAreaView.getCenter().x < ((m_dungeon.getWidth() - 3) * c_tileWidthf))
+                if (m_playAreaView.getCenter().x < ((m_dungeon.getWidth() - 3) * simpleConst::tileWidthf))
                 {
-                    m_playAreaView.move(c_tileWidthf, 0.0f);
+                    m_playAreaView.move(simpleConst::tileWidthf, 0.0f);
                 }
             }
             break;
