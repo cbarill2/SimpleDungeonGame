@@ -19,3 +19,8 @@ Attack::Attack(std::string name, int dieSides, int minRange, int maxRange, const
     setTexture(&attackTexture);
     setTextureRect(textureRect);
 }
+
+bool Attack::isValid(int attackPoints, int range) const
+{
+    return getCost() <= attackPoints && getMinRange() <= range && getMaxRange() >= range;
+}

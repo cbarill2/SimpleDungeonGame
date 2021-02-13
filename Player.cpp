@@ -29,7 +29,8 @@ bool Player::chooseAttack(sf::Vector2f clickPosition)
 {
     for (auto const &attack : *m_attacks)
     {
-        if (attack.getGlobalBounds().contains(clickPosition))
+        if (attack.isValid(m_currentAttackPoints, getDistanceFromTarget(*m_target)) &&
+            attack.getGlobalBounds().contains(clickPosition))
         {
             m_isAttacking = true;
             m_selectedAttack = &attack;
@@ -117,7 +118,7 @@ void Player::draw(sf::RenderWindow &window) const
         int j = 0;
         for (auto &&attack : *m_attacks)
         {
-            if (attack.getCost() <= m_currentAttackPoints && attack.getMinRange() <= targetDistance && attack.getMaxRange() >= targetDistance)
+            if (attack.isValid(m_currentAttackPoints, targetDistance))
             {
                 attack.setPosition(getPosition().x - (simpleConst::attackTileWidthf * (++j)), getPosition().y - simpleConst::attackTileWidthf);
                 window.draw(attack);

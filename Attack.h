@@ -29,4 +29,5 @@ public:
     auto getDamage() const { return m_currentDamage; }
     auto getAttackDieSides() const { return m_attackDieSides; }
     auto getAttackDieString() const { return m_attackDieString; }
+    bool isValid(int attackPoints, int range) const;
 };
