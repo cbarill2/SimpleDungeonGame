@@ -5,9 +5,8 @@
 class Tile : public sf::RectangleShape
 {
 private:
-    int m_xCoord, m_yCoord;
-    sf::Rect<float> rect;
-    bool m_hasUnit, m_hasCollision, m_isDoor;
+    int m_xCoord{0}, m_yCoord{0};
+    bool m_hasUnit{false}, m_hasCollision{false}, m_isDoor{false};
 
 public:
     Tile() : m_hasUnit{false}, m_isDoor{false} {}

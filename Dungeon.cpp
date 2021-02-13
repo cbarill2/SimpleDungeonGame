@@ -12,12 +12,12 @@ void Dungeon::draw(sf::RenderWindow &window)
 {
     for (auto const &indexSpeedPair : m_movableTiles)
     {
-        m_tiles[indexSpeedPair.first].setFillColor(sf::Color::Cyan);
+        m_tiles.at(indexSpeedPair.first).setFillColor(sf::Color::Cyan);
     }
 
     for (int tileIndex = 0; tileIndex < m_numberOfTiles; ++tileIndex)
     {
-        window.draw(m_tiles[tileIndex]);
+        window.draw(m_tiles.at(tileIndex));
     }
 
     for (auto const &indexEnemyPair : m_enemies)
@@ -27,7 +27,7 @@ void Dungeon::draw(sf::RenderWindow &window)
 
     for (auto const &indexSpeedPair : m_movableTiles)
     {
-        m_tiles[indexSpeedPair.first].setFillColor(sf::Color::White);
+        m_tiles.at(indexSpeedPair.first).setFillColor(sf::Color::White);
     }
 }
 
@@ -35,7 +35,7 @@ void Dungeon::buildMovableTilesMap(sf::Vector2f playerPosition, int playerSpeed)
 {
     int tileIndex;
 
-    if (isValidTile(playerPosition, tileIndex) && !m_tiles[tileIndex].hasCollision())
+    if (isValidTile(playerPosition, tileIndex) && !m_tiles.at(tileIndex).hasCollision())
     {
         if (playerSpeed > 0)
         {
@@ -44,12 +44,16 @@ void Dungeon::buildMovableTilesMap(sf::Vector2f playerPosition, int playerSpeed)
             buildMovableTilesMap(sf::Vector2f{playerPosition.x + simpleConst::tileWidthf, playerPosition.y}, playerSpeed - 1);
             buildMovableTilesMap(sf::Vector2f{playerPosition.x, playerPosition.y - simpleConst::tileWidthf}, playerSpeed - 1);
         }
-        if (!m_tiles[tileIndex].hasUnit())
+        if (!m_tiles.at(tileIndex).hasUnit())
         {
             auto search = m_movableTiles.find(tileIndex);
-            if (search == m_movableTiles.end() || playerSpeed > search->second)
+            if (search == m_movableTiles.end())
             {
-                m_movableTiles[tileIndex] = playerSpeed;
+                m_movableTiles.emplace(tileIndex, playerSpeed);
+            }
+            else if (playerSpeed > search->second)
+            {
+                m_movableTiles.at(tileIndex) = playerSpeed;
             }
         }
     }
@@ -89,14 +93,14 @@ void Dungeon::buildAttackableTilesMap(sf::Vector2f playerPosition, int minRange,
         for (int y = playerPosition.y - maxRange; y <= playerPosition.y + maxRange; y += simpleConst::tileWidthi)
         {
             int dist = abs(playerPosition.x - x) + abs(playerPosition.y - y);
-            if (dist <= maxRange && dist >= minRange && isValidTile(sf::Vector2f{(float)x, (float)y}, tileIndex) && m_tiles[tileIndex].hasUnit())
+            if (dist <= maxRange && dist >= minRange && isValidTile(sf::Vector2f{(float)x, (float)y}, tileIndex) && m_tiles.at(tileIndex).hasUnit())
             {
                 auto search = m_enemies.find(tileIndex);
                 if (search != m_enemies.end() && search->second.isAlive() &&
                     los(playerPosition, sf::Vector2f{(float)x, (float)y}))
                 {
                     m_attackableTiles.push_back(tileIndex);
-                    m_tiles[tileIndex].setFillColor(sf::Color::Red);
+                    m_tiles.at(tileIndex).setFillColor(sf::Color::Red);
                 }
             }
         }
@@ -107,7 +111,7 @@ void Dungeon::clearAttackableTiles()
 {
     for (auto const &tileIndex : m_attackableTiles)
     {
-        m_tiles[tileIndex].setFillColor(sf::Color::White);
+        m_tiles.at(tileIndex).setFillColor(sf::Color::White);
     }
 
     m_attackableTiles.clear();
@@ -118,7 +122,7 @@ bool Dungeon::isTileAtPosition(sf::Vector2f &position) const
     int tileIndex;
     if (isValidTile(position, tileIndex))
     {
-        position = m_tiles[tileIndex].getPosition();
+        position = m_tiles.at(tileIndex).getPosition();
         return true;
     }
     return false;
@@ -129,7 +133,7 @@ bool Dungeon::tileHasUnit(sf::Vector2f position) const
     int tileIndex;
     if (isValidTile(position, tileIndex))
     {
-        return m_tiles[tileIndex].hasUnit();
+        return m_tiles.at(tileIndex).hasUnit();
     }
     return false;
 }
@@ -137,7 +141,7 @@ bool Dungeon::tileHasUnit(sf::Vector2f position) const
 Tile &Dungeon::getTileAtPosition(sf::Vector2f position)
 {
     int tileIndex = ((int)(position.y / simpleConst::tileWidthf) * m_width) + (int)(position.x / simpleConst::tileWidthf);
-    return m_tiles[tileIndex];
+    return m_tiles.at(tileIndex);
 }
 
 bool Dungeon::isValidTile(sf::Vector2f position, int &tileIndex) const
@@ -153,13 +157,12 @@ bool Dungeon::isValidTile(sf::Vector2f position, int &tileIndex) const
 void Dungeon::removeEnemy(int defeatedEnemyIndex)
 {
     m_enemies.erase(defeatedEnemyIndex);
-    m_tiles[defeatedEnemyIndex].toggleUnit();
+    m_tiles.at(defeatedEnemyIndex).toggleUnit();
 }
 
 void Dungeon::reset()
 {
-    delete[] m_tiles;
-    m_tiles = new Tile[m_numberOfTiles];
+    m_tiles.clear();
     m_enemies.clear();
 
     generateProcedurally();
@@ -168,19 +171,19 @@ void Dungeon::reset()
 
 void Dungeon::generateProcedurally()
 {
-    int *heights{new int[m_width]{0}};
+    std::vector<int> heights(m_width);
     sf::Vector2f tileSize{simpleConst::tileWidthf, simpleConst::tileWidthf};
     PRNG prng{};
     prng.seed64(1);
     prng.seed128(prng.nextSplitMix64(), prng.nextSplitMix64());
     int roomWidth, roomHeight, tileTextureIndex;
-    int currentWidth{0}, currentHeight{0}, minHeight{m_height};
+    size_t currentWidth{0}, currentHeight{0}, minHeight{m_height};
     while (currentHeight < m_height - 1)
     {
         currentWidth = 0;
         while (currentWidth < m_width - 1)
         {
-            currentHeight = heights[currentWidth + 1];
+            currentHeight = heights.at(currentWidth + 1);
             roomHeight = prng.random_roll(5, 6);
             roomWidth = prng.random_roll(5, 6);
 
@@ -198,9 +201,9 @@ void Dungeon::generateProcedurally()
             minHeight = currentHeight;
             for (int x = currentWidth; x < xEdge; ++x)
             {
-                if (heights[x] < minHeight)
+                if (heights.at(x) < minHeight)
                 {
-                    minHeight = heights[x];
+                    minHeight = heights.at(x);
                 }
             }
 
@@ -212,16 +215,16 @@ void Dungeon::generateProcedurally()
                 {
                     int tileIndex = (y * m_width) + x;
 
-                    if ((x == currentWidth && y == minHeight)     //top left corner
-                        || (x == currentWidth && y == yEdge - 1)  //bottom left corner
-                        || (x == xEdge - 1 && y == minHeight)     //top right corner
-                        || (x == xEdge - 1 && y == yEdge - 1)     //bottom right corner
-                        || (y == minHeight || y == yEdge - 1)     //wall going from left to right
-                        || (x == currentWidth || x == xEdge - 1)) //wall going from top to bottom
+                    if ((x == currentWidth && y == minHeight)     // top left corner
+                        || (x == currentWidth && y == yEdge - 1)  // bottom left corner
+                        || (x == xEdge - 1 && y == minHeight)     // top right corner
+                        || (x == xEdge - 1 && y == yEdge - 1)     // bottom right corner
+                        || (y == minHeight || y == yEdge - 1)     // wall going from left to right
+                        || (x == currentWidth || x == xEdge - 1)) // wall going from top to bottom
                     {
                         if (y > 0 && x > 0 && y != m_height - 1 && x != m_width - 1             // no doors on outer walls
-                            && numberOfDoors > 0                                                //we have more doors to place
-                            && ((xEdge - x) == roomWidth / 2 || (yEdge - y) == roomHeight / 2)) //try to center doors
+                            && numberOfDoors > 0                                                // we have more doors to place
+                            && ((xEdge - x) == roomWidth / 2 || (yEdge - y) == roomHeight / 2)) // try to center doors
                         {
                             // door tile
                             tileTextureIndex = 2;
@@ -244,29 +247,27 @@ void Dungeon::generateProcedurally()
                         tileTextureIndex = 0;
                     }
 
-                    m_tiles[tileIndex] = Tile{tileSize, tileTextureIndex % 2 == 1, tileTextureIndex == 2};
-                    m_tiles[tileIndex].setTexture(m_texture);
-                    m_tiles[tileIndex].setTextureRect(
+                    m_tiles.try_emplace(tileIndex ,tileSize, tileTextureIndex % 2 == 1, tileTextureIndex == 2);
+                    m_tiles.at(tileIndex).setTexture(m_texture);
+                    m_tiles.at(tileIndex).setTextureRect(
                         sf::IntRect{
                             simpleConst::tileWidthi * tileTextureIndex,
                             simpleConst::tileWidthi * (int)m_biome * c_tileMapHeight,
                             simpleConst::tileWidthi,
                             simpleConst::tileWidthi});
-                    m_tiles[tileIndex].setPosition(
+                    m_tiles.at(tileIndex).setPosition(
                         simpleConst::tileWidthf * (tileIndex % m_width),
                         simpleConst::tileWidthf * (tileIndex / m_width),
                         (tileIndex % m_width),
                         (tileIndex / m_width));
 
-                    heights[x] = yEdge - 1;
+                    heights.at(x) = yEdge - 1;
                 }
             }
 
             currentWidth = xEdge - 1;
         }
     }
-
-    delete[] heights;
 }
 
 void Dungeon::populateWithEnemies()
@@ -278,13 +279,13 @@ void Dungeon::populateWithEnemies()
     m_numberOfEnemies = prng.random_roll(4, 18);
 
     int remainingEnemies = m_numberOfEnemies;
-    for (int i = m_width + 5; i < m_numberOfTiles && remainingEnemies > 0; ++i)
+    for (int tileIndex = m_width + 5; tileIndex < m_numberOfTiles && remainingEnemies > 0; ++tileIndex)
     {
-        if (prng.random_roll(50) == 1 && !m_tiles[i].hasCollision() && !m_tiles[i].hasUnit())
+        if (prng.random_roll(50) == 1 && !m_tiles.at(tileIndex).hasCollision() && !m_tiles.at(tileIndex).hasUnit())
         {
-            auto ref = m_enemies.try_emplace(i, m_tiles[i].getXCoord(), m_tiles[i].getYCoord(), *m_enemyTexture, *m_enemyTexture);
+            auto ref = m_enemies.try_emplace(tileIndex, m_tiles.at(tileIndex).getXCoord(), m_tiles.at(tileIndex).getYCoord(), *m_enemyTexture, *m_enemyTexture);
             assert(ref.second);
-            m_tiles[i].toggleUnit();
+            m_tiles.at(tileIndex).toggleUnit();
             --remainingEnemies;
         }
     }
@@ -304,7 +305,7 @@ bool Dungeon::los(sf::Vector2f currentTile, sf::Vector2f targetTile) const
         while (currentY != targetY)
         {
             currentY += (currentY < targetY) ? c_losIncrement : c_losDecrement;
-            if (!isValidTile(sf::Vector2f{currentX, currentY}, tileIndex) || m_tiles[tileIndex].hasCollision())
+            if (!isValidTile(sf::Vector2f{currentX, currentY}, tileIndex) || m_tiles.at(tileIndex).hasCollision())
             {
                 return false;
             }
@@ -320,7 +321,7 @@ bool Dungeon::los(sf::Vector2f currentTile, sf::Vector2f targetTile) const
     {
         currentX += (currentX < targetX) ? c_losIncrement : c_losDecrement;
         currentY = targetY - (slope * (targetX - currentX));
-        if (!isValidTile(sf::Vector2f{currentX, currentY}, tileIndex) || m_tiles[tileIndex].hasCollision())
+        if (!isValidTile(sf::Vector2f{currentX, currentY}, tileIndex) || m_tiles.at(tileIndex).hasCollision())
         {
             return false;
         }
@@ -328,13 +329,12 @@ bool Dungeon::los(sf::Vector2f currentTile, sf::Vector2f targetTile) const
     return true;
 }
 
-void Dungeon::initialize(int width, int height, Biome biome)
+void Dungeon::initialize(size_t width, size_t height, Biome biome)
 {
     m_width = width;
     m_height = height;
     m_numberOfTiles = m_width * m_height;
     m_biome = biome;
-    m_tiles = new Tile[m_numberOfTiles];
 
     generateProcedurally();
     populateWithEnemies();

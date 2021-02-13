@@ -14,21 +14,18 @@ private:
     const int c_tileMapWidth{8}, c_tileMapHeight{1};
     const float c_losIncrement{10.0f}, c_losDecrement{-10.0f};
 
-    int m_numberOfTiles;
+    size_t m_width, m_height, m_numberOfTiles, m_numberOfEnemies;
     std::map<int, int> m_movableTiles; // tile index, player speed remaining
     std::map<int, Enemy> m_enemies;    // tile index, Enemy
+    std::map<int, Tile> m_tiles;
     std::vector<int> m_attackableTiles;
-    Tile *m_tiles; // can't use a vector with dungeon generation as-written
     const sf::Texture *m_texture, *m_enemyTexture;
-    int m_width, m_height, m_numberOfEnemies;
 
     void generateProcedurally();
     void populateWithEnemies();
     bool los(sf::Vector2f currentTile, sf::Vector2f targetTile) const;
 
 public:
-    ~Dungeon() { delete[] m_tiles; }
-
     enum class Biome
     {
         Stone,
@@ -56,6 +53,6 @@ public:
     bool isValidTile(sf::Vector2f position, int &tileIndex) const;
     void removeEnemy(int defeatedEnemyIndex);
     void reset();
-    void initialize(int width, int height, Biome biome);
+    void initialize(size_t width, size_t height, Biome biome);
     void setTextures(sf::Texture &dungeonTexture, sf::Texture &enemyTexture);
 };
