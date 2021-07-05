@@ -12,7 +12,7 @@ class Dungeon
 {
 private:
     const int c_tileMapWidth{8}, c_tileMapHeight{1};
-    const float c_losIncrement{10.0f}, c_losDecrement{-10.0f};
+    const float c_losIncrement{5.0f}, c_losDecrement{-5.0f};
 
     size_t m_width, m_height, m_numberOfTiles, m_numberOfEnemies;
     std::map<int, int> m_movableTiles; // tile index, player speed remaining

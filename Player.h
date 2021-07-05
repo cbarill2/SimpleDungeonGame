@@ -28,8 +28,8 @@ public:
     bool canAttack() const { return (m_currentAttackPoints > 0); }
     bool hasTarget() const { return m_hasTarget; }
     bool isAttacking() const { return m_isAttacking; }
-    int getMaxRange() const { return m_attackMaxRanges[m_currentAttackPoints] * 100; }
-    int getMinRange() const { return m_minRange * 100; }
+    int getMaxRange() const { return m_attackMaxRanges[m_currentAttackPoints] * simpleConst::tileWidthi; }
+    int getMinRange() const { return m_minRange * simpleConst::tileWidthi; }
     int getDistanceFromTarget(Unit &target) const;
     void setTarget(Unit *target);
     void clearTarget();

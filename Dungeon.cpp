@@ -247,14 +247,15 @@ void Dungeon::generateProcedurally()
                         tileTextureIndex = 0;
                     }
 
+                    m_tiles.erase(tileIndex);
                     m_tiles.try_emplace(tileIndex ,tileSize, tileTextureIndex % 2 == 1, tileTextureIndex == 2);
                     m_tiles.at(tileIndex).setTexture(m_texture);
                     m_tiles.at(tileIndex).setTextureRect(
                         sf::IntRect{
-                            simpleConst::tileWidthi * tileTextureIndex,
-                            simpleConst::tileWidthi * (int)m_biome * c_tileMapHeight,
-                            simpleConst::tileWidthi,
-                            simpleConst::tileWidthi});
+                            simpleConst::textureWidthi * tileTextureIndex,
+                            simpleConst::textureWidthi * (int)m_biome * c_tileMapHeight,
+                            simpleConst::textureWidthi,
+                            simpleConst::textureWidthi});
                     m_tiles.at(tileIndex).setPosition(
                         simpleConst::tileWidthf * (tileIndex % m_width),
                         simpleConst::tileWidthf * (tileIndex / m_width),
@@ -295,8 +296,8 @@ bool Dungeon::los(sf::Vector2f currentTile, sf::Vector2f targetTile) const
 {
     // TODO: still behaves differently if slope is 3 vs 1/3...
     int tileIndex;
-    float currentX = currentTile.x + 50.0f, currentY = currentTile.y + 50.0f;
-    float targetX = targetTile.x + 50.0f, targetY = targetTile.y + 50.0f;
+    float currentX = currentTile.x + simpleConst::tileWidthf/2, currentY = currentTile.y + simpleConst::tileWidthf/2;
+    float targetX = targetTile.x + simpleConst::tileWidthf/2, targetY = targetTile.y + simpleConst::tileWidthf/2;
     if (currentX == targetX)
     {
         // x is the same so there's no slope

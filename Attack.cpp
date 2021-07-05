@@ -1,7 +1,7 @@
 #include "Attack.h"
 
 Attack::Attack(std::string data, const sf::Texture &attackTexture, sf::IntRect textureRect)
-    : RectangleShape{sf::Vector2f{50.f, 50.f}}
+    : RectangleShape{sf::Vector2f{simpleConst::attackTileWidthf, simpleConst::attackTileWidthf}}
 {
     std::istringstream dataStream{data};
     dataStream >> m_name >> m_minRange >> m_maxRange >> m_baseCost >> m_baseDamage >> m_attackDieSides;
@@ -14,7 +14,7 @@ Attack::Attack(std::string data, const sf::Texture &attackTexture, sf::IntRect t
 }
 
 Attack::Attack(std::string name, int dieSides, int minRange, int maxRange, const sf::Texture &attackTexture, sf::IntRect textureRect)
-    : RectangleShape{sf::Vector2f{50.f, 50.f}}, m_attackDieSides{dieSides}, m_minRange{minRange}, m_maxRange{maxRange}, m_attackDieString{name + ": Roll a D" + std::to_string(dieSides)}
+    : RectangleShape{sf::Vector2f{simpleConst::attackTileWidthf, simpleConst::attackTileWidthf}}, m_attackDieSides{dieSides}, m_minRange{minRange}, m_maxRange{maxRange}, m_attackDieString{name + ": Roll a D" + std::to_string(dieSides)}
 {
     setTexture(&attackTexture);
     setTextureRect(textureRect);

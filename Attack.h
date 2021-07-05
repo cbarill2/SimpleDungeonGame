@@ -1,5 +1,6 @@
 #include <sstream>
 #include "Dice.h"
+#include "Constants.h"
 
 #pragma once
 

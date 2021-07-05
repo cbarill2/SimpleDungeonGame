@@ -33,7 +33,7 @@ void Game::loadTextures()
         for (uint32_t y = 0; y < simpleConst::tileWidthi; ++y)
         {
             sf::Color c = image.getPixel(x, y);
-            c.a *= 0.65;
+            c.a *= 0.65;    // set at 65% opacity
             image.setPixel(x, y, c);
         }
     }
@@ -71,7 +71,7 @@ void Game::loadAttackData()
     int index = 0;
     while (std::getline(file, line))
     {
-        m_attackData.emplace_back(line, m_attackTexture, sf::IntRect{index++ * simpleConst::tileWidthi, 0, simpleConst::tileWidthi, simpleConst::tileWidthi});
+        m_attackData.emplace_back(line, m_attackTexture, sf::IntRect{index++ * simpleConst::textureWidthi, 0, simpleConst::textureWidthi, simpleConst::textureWidthi});
     }
 }
 
@@ -94,35 +94,35 @@ void Game::createDungeon()
 
 void Game::createDice()
 {
-    m_dice.emplace_back(6, m_diceTexture, sf::IntRect{0 * simpleConst::tileWidthi, 0, simpleConst::tileWidthi, simpleConst::tileWidthi}, sf::Vector2f{c_diceX, c_d6Y});
-    m_dice.emplace_back(8, m_diceTexture, sf::IntRect{1 * simpleConst::tileWidthi, 0, simpleConst::tileWidthi, simpleConst::tileWidthi}, sf::Vector2f{c_diceX, c_d8Y});
-    m_dice.emplace_back(10, m_diceTexture, sf::IntRect{2 * simpleConst::tileWidthi, 0, simpleConst::tileWidthi, simpleConst::tileWidthi}, sf::Vector2f{c_diceX, c_d10Y});
-    m_dice.emplace_back(12, m_diceTexture, sf::IntRect{3 * simpleConst::tileWidthi, 0, simpleConst::tileWidthi, simpleConst::tileWidthi}, sf::Vector2f{c_diceX, c_d12Y});
+    m_dice.emplace_back(6, m_diceTexture, sf::IntRect{0 * simpleConst::textureWidthi, 0, simpleConst::textureWidthi, simpleConst::textureWidthi}, sf::Vector2f{c_diceX, c_d6Y});
+    m_dice.emplace_back(8, m_diceTexture, sf::IntRect{1 * simpleConst::textureWidthi, 0, simpleConst::textureWidthi, simpleConst::textureWidthi}, sf::Vector2f{c_diceX, c_d8Y});
+    m_dice.emplace_back(10, m_diceTexture, sf::IntRect{2 * simpleConst::textureWidthi, 0, simpleConst::textureWidthi, simpleConst::textureWidthi}, sf::Vector2f{c_diceX, c_d10Y});
+    m_dice.emplace_back(12, m_diceTexture, sf::IntRect{3 * simpleConst::textureWidthi, 0, simpleConst::textureWidthi, simpleConst::textureWidthi}, sf::Vector2f{c_diceX, c_d12Y});
 }
 
 void Game::createTextObjects()
 {
     m_font = ResourceLoader::LoadFromResource<sf::Font>("font");
     m_rollText.setFont(m_font);
-    m_rollText.setCharacterSize(50);
-    m_rollText.setPosition(-9700, -10025);
+    m_rollText.setCharacterSize(50U);
+    m_rollText.setPosition(-9700.f, -10025.f);
     m_turnText.setFont(m_font);
-    m_turnText.setCharacterSize(50);
-    m_turnText.setPosition(-10495, -10025);
+    //m_turnText.setCharacterSize(50U);
+    m_turnText.setPosition(-10495.f, -10025.f);
 }
 
 void Game::createViews()
 {
-    m_playAreaView.setCenter(sf::Vector2f{300.0f, 300.0f});
+    m_playAreaView.setCenter(sf::Vector2f{3.f * simpleConst::tileWidthf, 3.f * simpleConst::tileWidthf});
     m_playAreaView.setSize(sf::Vector2f{c_playViewScale * simpleConst::tileWidthf, c_playViewScale * simpleConst::tileWidthf});
     m_playAreaView.setViewport(sf::FloatRect{0.0f, 0.0f, 1.0f, 0.9f});
 
-    m_diceView.setCenter(sf::Vector2f{-5600.0f, -4600.0f});
-    m_diceView.setSize(sf::Vector2f{c_diceViewScale * simpleConst::tileWidthf, c_diceViewScale * simpleConst::tileWidthf});
+    m_diceView.setCenter(sf::Vector2f{-5600.f, -4600.f});
+    m_diceView.setSize(sf::Vector2f{c_diceViewScale * 100.f, c_diceViewScale * 100.f});
     m_diceView.setViewport(sf::FloatRect{0.0f, 0.0f, 1.0f, 1.0f});
 
-    m_hudView.setCenter(sf::Vector2f{-10000.0f, -10000.0f});
-    m_hudView.setSize(sf::Vector2f{10 * simpleConst::tileWidthf, 1 * simpleConst::tileWidthf});
+    m_hudView.setCenter(sf::Vector2f{-10000.f, -10000.f});
+    m_hudView.setSize(sf::Vector2f{10 * 100.f, 1 * 100.f});
     m_hudView.setViewport(sf::FloatRect{0.0f, 0.9f, 1.0f, 0.1f});
 }
 

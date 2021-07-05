@@ -1,5 +1,4 @@
 #include "Unit.h"
-#include "Attack.h"
 
 Unit::Unit()
     : Sprite{}, m_startingCoords{0, 0}, m_level{1}, m_player{false}, m_alive{true}, m_xpValue{0}
@@ -17,7 +16,8 @@ Unit::Unit(int x, int y, const sf::Texture &activeTexture, const sf::Texture &in
     setMaxStats();
     setStatsToMax();
     setTexture(*m_inactiveTexture);
-    setTextureRect(sf::IntRect{0, 0, 100, 100});
+    setTextureRect(sf::IntRect{0, 0, c_animFrameWidth, c_animFrameHeight});
+    setScale(simpleConst::tileWidthf / c_animFrameWidth, simpleConst::tileWidthf / c_animFrameWidth);
     moveToCoords(x, y, m_currentSpeed);
 }
 
@@ -36,7 +36,7 @@ void Unit::setStatsToMax()
 
 void Unit::moveToCoords(int x, int y, int newSpeed)
 {
-    Sprite::setPosition(sf::Vector2f{x * 100.0f, y * 100.0f});
+    Sprite::setPosition(sf::Vector2f{x * simpleConst::tileWidthf, y * simpleConst::tileWidthf});
     m_coords.x = x;
     m_coords.y = y;
     m_currentSpeed = newSpeed;
@@ -101,7 +101,7 @@ void Unit::advanceAnimation()
     {
         m_currentAnimFrame = 0;
     }
-    setTextureRect(sf::IntRect{m_currentAnimFrame * 100, 0, c_animFrameWidth, c_animFrameHeight});
+    setTextureRect(sf::IntRect{m_currentAnimFrame * c_animFrameHeight, 0, c_animFrameWidth, c_animFrameHeight});
 }
 
 void Unit::draw(sf::RenderWindow &window) const
