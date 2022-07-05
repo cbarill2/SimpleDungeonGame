@@ -12,7 +12,7 @@ private:
     std::vector<int> m_attackMaxRanges;
     Unit *m_target{nullptr};
     const Attack *m_selectedAttack{nullptr};
-    int m_minRange, m_maxRange, m_maxAttackPoints, m_currentAttackPoints;
+    int m_minAttackRange, m_viewDistance, m_maxAttackPoints, m_currentAttackPoints;
     int m_experiencePoints;
     bool m_hasTarget{false}, m_isAttacking{false};
 
@@ -28,8 +28,9 @@ public:
     bool canAttack() const { return (m_currentAttackPoints > 0); }
     bool hasTarget() const { return m_hasTarget; }
     bool isAttacking() const { return m_isAttacking; }
-    int getMaxRange() const { return m_attackMaxRanges[m_currentAttackPoints] * simpleConst::tileWidthi; }
-    int getMinRange() const { return m_minRange * simpleConst::tileWidthi; }
+    int getMaxAttackRange() const { return m_attackMaxRanges[m_currentAttackPoints] * simpleConst::tileWidthi; }
+    int getMinAttackRange() const { return m_minAttackRange * simpleConst::tileWidthi; }
+    int getViewDistance() const { return m_viewDistance; }
     int getDistanceFromTarget(Unit &target) const;
     void setTarget(Unit *target);
     void clearTarget();

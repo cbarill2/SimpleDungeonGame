@@ -33,7 +33,7 @@ void Game::loadTextures()
         for (uint32_t y = 0; y < simpleConst::tileWidthi; ++y)
         {
             sf::Color c = image.getPixel(x, y);
-            c.a *= 0.65;    // set at 65% opacity
+            c.a *= 0.65; // set at 65% opacity
             image.setPixel(x, y, c);
         }
     }
@@ -89,7 +89,7 @@ void Game::createDungeon()
     int dungeonHeight{(int)m_prng.random_roll(41, 20)};
     m_dungeon.setTextures(m_dungeonTexture, m_enemyTexture);
     m_dungeon.initialize(dungeonWidth, dungeonHeight, Dungeon::Biome::Dirt);
-    m_dungeon.getTileAtPosition(currentPlayer.getPosition()).toggleUnit();
+    m_dungeon.toggleUnitAtPosition(currentPlayer.getPosition());
 }
 
 void Game::createDice()
@@ -107,7 +107,7 @@ void Game::createTextObjects()
     m_rollText.setCharacterSize(50U);
     m_rollText.setPosition(-9700.f, -10025.f);
     m_turnText.setFont(m_font);
-    //m_turnText.setCharacterSize(50U);
+    // m_turnText.setCharacterSize(50U);
     m_turnText.setPosition(-10495.f, -10025.f);
 }
 
@@ -136,7 +136,7 @@ void Game::reset()
     }
 
     m_turnIndex = 0;
-    m_dungeon.getTileAtPosition(currentPlayer.getPosition()).toggleUnit();
+    m_dungeon.toggleUnitAtPosition(currentPlayer.getPosition());
     startTurn();
 }
 
@@ -158,36 +158,29 @@ void Game::selectTile(sf::Vector2f clickPosition)
     int xCoord{(int)(clickPosition.x / simpleConst::tileWidthi)};
     int yCoord{(int)(clickPosition.y / simpleConst::tileWidthi)};
 
-    if (xCoord >= 0 && xCoord < m_dungeon.getWidth() &&
-        yCoord >= 0 && yCoord < m_dungeon.getHeight())
-    {
-        int index, speedLeft;
+    int speedLeft;
 
-        if (m_dungeon.isTileAtPosition(clickPosition) && m_dungeon.isValidTile(clickPosition, index))
+    if (m_dungeon.isTileAtPosition(clickPosition))
+    {
+        if (m_dungeon.isMovableTile(xCoord, yCoord, speedLeft))
         {
-            if (m_dungeon.isMovableTile(index, speedLeft))
-            {
-                m_dungeon.getTileAtPosition(currentPlayer.getPosition()).toggleUnit();
-                currentPlayer.moveToCoords(xCoord, yCoord, speedLeft);
-                m_dungeon.getTileAtPosition(clickPosition).toggleUnit();
-                m_dungeon.clearMovableTiles();
-                m_dungeon.buildMovableTilesMap(currentPlayer.getPosition(), currentPlayer.getSpeed());
-                if (currentPlayer.canAttack())
-                {
-                    m_dungeon.buildAttackableTilesMap(currentPlayer.getPosition(), currentPlayer.getMinRange(), currentPlayer.getMaxRange());
-                }
-            }
-            else if (currentPlayer.canAttack() && m_dungeon.isAttackableTile(index))
-            {
-                currentPlayer.setTarget(&m_dungeon.getEnemyOnTile(index));
-                m_turnText.setString("Select Attack");
-                m_dungeon.clearMovableTiles();
-                m_playAreaView.setCenter(currentPlayer.getPosition().x + (clickPosition.x - currentPlayer.getPosition().x) / 2,
-                                         currentPlayer.getPosition().y + (clickPosition.y - currentPlayer.getPosition().y) / 2);
-            }
-            else
-            {
-            }
+            m_dungeon.toggleUnitAtPosition(currentPlayer.getPosition());
+            currentPlayer.moveToCoords(xCoord, yCoord, speedLeft);
+            m_dungeon.toggleUnitAtPosition(clickPosition);
+            m_dungeon.clearMovableTiles();
+            m_dungeon.buildMovableTilesMap(currentPlayer.getPosition(), currentPlayer.getSpeed());
+            m_dungeon.buildVisibleTilesMap(currentPlayer.getPosition(), currentPlayer.getViewDistance(), currentPlayer.getMinAttackRange(), currentPlayer.getMaxAttackRange());
+        }
+        else if (currentPlayer.canAttack() && m_dungeon.isAttackableTile(xCoord, yCoord))
+        {
+            currentPlayer.setTarget(&m_dungeon.getEnemyAtCoords(xCoord, yCoord));
+            m_turnText.setString("Select Attack");
+            m_dungeon.clearMovableTiles();
+            m_playAreaView.setCenter(currentPlayer.getPosition().x + (clickPosition.x - currentPlayer.getPosition().x) / 2,
+                                     currentPlayer.getPosition().y + (clickPosition.y - currentPlayer.getPosition().y) / 2);
+        }
+        else
+        {
         }
     }
 }
@@ -241,11 +234,11 @@ void Game::startTurn()
     sf::Vector2f currentPosition = currentPlayer.getPosition();
     m_dungeon.clearMovableTiles();
     m_dungeon.buildMovableTilesMap(currentPosition, currentPlayer.getSpeed());
-    m_dungeon.buildAttackableTilesMap(currentPosition, currentPlayer.getMinRange(), currentPlayer.getMaxRange());
+    m_dungeon.buildVisibleTilesMap(currentPosition, currentPlayer.getViewDistance(), currentPlayer.getMinAttackRange(), currentPlayer.getMaxAttackRange());
     m_playAreaView.setCenter(currentPosition);
-    if (!m_dungeon.getTileAtPosition(currentPosition).hasUnit())
+    if (!m_dungeon.tileAtPositionHasUnit(currentPosition))
     {
-        m_dungeon.getTileAtPosition(currentPosition).toggleUnit();
+        m_dungeon.toggleUnitAtPosition(currentPosition);
     }
     m_isRolling = false;
     m_turnText.setString("Move Player " + std::to_string(m_turnIndex + 1));
@@ -274,7 +267,7 @@ void Game::processInput()
             {
             case sf::Keyboard::Escape:
             {
-                m_isRunning = false; //TODO: for now just quit, but should be a menu in future
+                m_isRunning = false; // TODO: for now just quit, but should be a menu in future
             }
             break;
             case sf::Keyboard::R:
@@ -342,7 +335,7 @@ void Game::processInput()
                 }
             }
             break;
-            case sf::Mouse::Right: //cancel current action
+            case sf::Mouse::Right: // cancel current action
             {
                 if (m_isRolling)
                 {
@@ -410,14 +403,7 @@ void Game::processInput()
 
                         currentPlayer.clearTarget();
                         m_dungeon.buildMovableTilesMap(currentPlayer.getPosition(), currentPlayer.getSpeed());
-                        if (currentPlayer.canAttack())
-                        {
-                            m_dungeon.buildAttackableTilesMap(currentPlayer.getPosition(), currentPlayer.getMinRange(), currentPlayer.getMaxRange());
-                        }
-                        else
-                        {
-                            m_dungeon.clearAttackableTiles();
-                        }
+                        m_dungeon.buildVisibleTilesMap(currentPlayer.getPosition(), currentPlayer.getViewDistance(), currentPlayer.getMinAttackRange(), currentPlayer.getMaxAttackRange());
                     }
                 }
                 else if (currentPlayer.hasTarget())

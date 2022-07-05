@@ -1,5 +1,6 @@
 #include <random>
 #include <map>
+#include <unordered_set>
 #include <assert.h>
 #include "Tile.h"
 #include "Enemy.h"
@@ -18,12 +19,17 @@ private:
     std::map<int, int> m_movableTiles; // tile index, player speed remaining
     std::map<int, Enemy> m_enemies;    // tile index, Enemy
     std::map<int, Tile> m_tiles;
-    std::vector<int> m_attackableTiles;
+    std::unordered_set<int> m_attackableTiles, m_visibleTiles;
     const sf::Texture *m_texture, *m_enemyTexture;
 
     void generateProcedurally();
     void populateWithEnemies();
-    bool los(sf::Vector2f currentTile, sf::Vector2f targetTile) const;
+    int getTileIndexFromPosition(sf::Vector2f position) const;
+    int getTileIndexFromCoords(int x, int y) const;
+    bool isValidTile(sf::Vector2f position, int &tileIndex) const;
+    Tile &getTileAtPosition(sf::Vector2f position);
+    bool tileHasEnemyInRange(int tileIndex, int playerDistance, int minRange, int maxRange);
+    void addAdjacentVisibleWalls(int visibleTileIndex);
 
 public:
     enum class Biome
@@ -32,27 +38,25 @@ public:
         Forest,
         Dirt,
     } m_biome;
-    void update();
-    void draw(sf::RenderWindow &window);
-    void buildMovableTilesMap(sf::Vector2f playerPosition, int playerSpeed);
-    auto hasMovableTiles() const { return !m_movableTiles.empty(); }
-    void clearMovableTiles();
-    bool isMovableTile(int tileIndex, int &speedLeft) const;
-    bool isAttackableTile(int tileIndex) const;
-    Enemy &getEnemyOnTile(int index) { return m_enemies.at(index); };
-    auto &getEnemies() { return m_enemies; }
-    auto getNumberOfEnemies() const { return m_numberOfEnemies; }
-    auto getHeight() const { return m_height; }
-    auto getWidth() const { return m_width; }
-    void buildAttackableTilesMap(sf::Vector2f playerPosition, int minRange = 100, int maxRange = 100);
-    void clearAttackableTiles();
-    auto hasAttackableTiles() const { return !m_attackableTiles.empty(); }
-    bool isTileAtPosition(sf::Vector2f &position) const;
-    bool tileHasUnit(sf::Vector2f position) const;
-    Tile &getTileAtPosition(sf::Vector2f position);
-    bool isValidTile(sf::Vector2f position, int &tileIndex) const;
-    void removeEnemy(int defeatedEnemyIndex);
-    void reset();
     void initialize(size_t width, size_t height, Biome biome);
     void setTextures(sf::Texture &dungeonTexture, sf::Texture &enemyTexture);
+    void reset();
+    void update();
+    void draw(sf::RenderWindow &window);
+    void buildVisibleTilesMap(sf::Vector2f playerPosition, int viewRange, int minAttackRange = 100, int maxAttackRange = 100);
+    void clearVisibleTiles();
+    auto hasAttackableTiles() const { return !m_attackableTiles.empty(); }
+    bool isAttackableTile(int x, int y) const;
+    void buildMovableTilesMap(sf::Vector2f playerPosition, int playerSpeed);
+    void clearMovableTiles();
+    auto hasMovableTiles() const { return !m_movableTiles.empty(); }
+    bool isMovableTile(int xCoord, int yCoord, int &speedLeft) const;
+    auto &getEnemies() { return m_enemies; }
+    auto getNumberOfEnemies() const { return m_numberOfEnemies; }
+    Enemy &getEnemyAtCoords(int x, int y);
+    auto getHeight() const { return m_height; }
+    auto getWidth() const { return m_width; }
+    bool isTileAtPosition(sf::Vector2f &position) const;
+    bool tileAtPositionHasUnit(sf::Vector2f position) const;
+    void toggleUnitAtPosition(sf::Vector2f position);
 };

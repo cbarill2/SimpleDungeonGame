@@ -2,9 +2,13 @@
 
 void Dungeon::update()
 {
-    for (auto const &tileIndex : m_attackableTiles)
+    for (auto const &tileIndex : m_visibleTiles)
     {
-        getEnemyOnTile(tileIndex).update();
+        auto search = m_enemies.find(tileIndex);
+        if (search != m_enemies.end())
+        {
+            search->second.update();
+        }
     }
 }
 
@@ -15,14 +19,14 @@ void Dungeon::draw(sf::RenderWindow &window)
         m_tiles.at(indexSpeedPair.first).setFillColor(sf::Color::Cyan);
     }
 
-    for (int tileIndex = 0; tileIndex < m_numberOfTiles; ++tileIndex)
+    for (auto const &tileIndex : m_visibleTiles)
     {
         window.draw(m_tiles.at(tileIndex));
-    }
-
-    for (auto const &indexEnemyPair : m_enemies)
-    {
-        window.draw(indexEnemyPair.second);
+        auto search = m_enemies.find(tileIndex);
+        if (search != m_enemies.end())
+        {
+            window.draw(search->second);
+        }
     }
 
     for (auto const &indexSpeedPair : m_movableTiles)
@@ -64,50 +68,159 @@ void Dungeon::clearMovableTiles()
     m_movableTiles.clear();
 }
 
-bool Dungeon::isMovableTile(int tileIndex, int &speedLeft) const
+bool Dungeon::isMovableTile(int x, int y, int &speedLeft) const
 {
+    int tileIndex = getTileIndexFromCoords(x, y);
     auto search = m_movableTiles.find(tileIndex);
     bool found = (search != m_movableTiles.end());
     speedLeft = (found) ? search->second : 0;
     return found;
 }
 
-bool Dungeon::isAttackableTile(int tileIndex) const
+bool Dungeon::isAttackableTile(int x, int y) const
 {
+    int tileIndex = getTileIndexFromCoords(x, y);
     return std::find(m_attackableTiles.begin(), m_attackableTiles.end(), tileIndex) != m_attackableTiles.end();
 }
 
-void Dungeon::buildAttackableTilesMap(sf::Vector2f playerPosition, int minRange, int maxRange)
+void Dungeon::buildVisibleTilesMap(sf::Vector2f playerPosition, int viewDistance, int minAttackRange, int maxAttackRange)
 {
-    clearAttackableTiles();
+    clearVisibleTiles();
 
-    if (maxRange == 0)
-    {
-        return; //maxRange 0 means targeting self?
-    }
-    int tileIndex;
+    int currentTileIndex;
+    bool isVisible;
 
-    // for each tile in range, is it: valid, has a live enemy, and in LOS
-    for (int x = playerPosition.x - maxRange; x <= playerPosition.x + maxRange; x += simpleConst::tileWidthi)
+    float currentX, currentY, targetX, targetY, slope;
+    m_visibleTiles.insert(getTileIndexFromPosition(playerPosition));
+
+    for (int y = playerPosition.y - viewDistance; y <= playerPosition.y + viewDistance; y += simpleConst::tileWidthi)
     {
-        for (int y = playerPosition.y - maxRange; y <= playerPosition.y + maxRange; y += simpleConst::tileWidthi)
+        targetY = y + simpleConst::tileWidthf / 2;
+        for (int x = playerPosition.x - viewDistance; x <= playerPosition.x + viewDistance; x += simpleConst::tileWidthi)
         {
-            int dist = abs(playerPosition.x - x) + abs(playerPosition.y - y);
-            if (dist <= maxRange && dist >= minRange && isValidTile(sf::Vector2f{(float)x, (float)y}, tileIndex) && m_tiles.at(tileIndex).hasUnit())
+            // only check outermost "ring" of tiles
+            if (y > playerPosition.y - viewDistance && y < playerPosition.y + viewDistance &&
+                x > playerPosition.x - viewDistance && x < playerPosition.x + viewDistance)
             {
-                auto search = m_enemies.find(tileIndex);
-                if (search != m_enemies.end() && search->second.isAlive() &&
-                    los(playerPosition, sf::Vector2f{(float)x, (float)y}))
+                continue;
+            }
+            // walk from center tile outward toward this tile, adding each tile to visible list and stopping when we hit a wall or invalid tile
+            targetX = x + simpleConst::tileWidthf / 2;
+
+            currentX = playerPosition.x + simpleConst::tileWidthf / 2;
+            currentY = playerPosition.y + simpleConst::tileWidthf / 2;
+
+            if (currentX == targetX)
+            {
+                // x is the same so there's no slope
+                // walk the tiles in the Y-direction
+                while (currentY != targetY)
                 {
-                    m_attackableTiles.push_back(tileIndex);
-                    m_tiles.at(tileIndex).setFillColor(sf::Color::Red);
+                    currentY += (currentY < targetY) ? c_losIncrement : c_losDecrement;
+                    if (!isValidTile(sf::Vector2f{currentX, currentY}, currentTileIndex))
+                    {
+                        // tile is not valid; stop iterating
+                        break;
+                    }
+                    // tile is valid, so it's visible
+                    m_visibleTiles.insert(currentTileIndex);
+
+                    if (m_tiles.at(currentTileIndex).hasCollision())
+                    {
+                        // tile blocks vision, so stop iterating
+                        break;
+                    }
+                    else
+                    {
+                        addAdjacentVisibleWalls(currentTileIndex);
+                    }
+
+                    int dist = abs(playerPosition.x - currentX) + abs(playerPosition.y - currentY);
+                    if (tileHasEnemyInRange(currentTileIndex, dist, minAttackRange, maxAttackRange))
+                    {
+                        m_attackableTiles.insert(currentTileIndex);
+                        m_tiles.at(currentTileIndex).setFillColor(sf::Color::Red);
+                    }
+                }
+            }
+            else
+            {
+                slope = (targetY - currentY) / (targetX - currentX);
+                while (currentX != targetX)
+                {
+                    currentX += (currentX < targetX) ? c_losIncrement : c_losDecrement;
+                    currentY = targetY - (slope * (targetX - currentX));
+                    if (!isValidTile(sf::Vector2f{currentX, currentY}, currentTileIndex))
+                    {
+                        // tile is not valid; stop iterating
+                        break;
+                    }
+                    // tile is valid, so it's visible
+                    m_visibleTiles.insert(currentTileIndex);
+
+                    if (m_tiles.at(currentTileIndex).hasCollision())
+                    {
+                        // tile blocks vision, so stop iterating
+                        break;
+                    }
+                    else
+                    {
+                        addAdjacentVisibleWalls(currentTileIndex);
+                    }
+
+                    int dist = abs(playerPosition.x - currentX) + abs(playerPosition.y - currentY);
+                    if (tileHasEnemyInRange(currentTileIndex, dist, minAttackRange, maxAttackRange))
+                    {
+                        m_attackableTiles.insert(currentTileIndex);
+                        m_tiles.at(currentTileIndex).setFillColor(sf::Color::Red);
+                    }
                 }
             }
         }
     }
 }
 
-void Dungeon::clearAttackableTiles()
+void Dungeon::addAdjacentVisibleWalls(int visibleTileIndex)
+{
+    int adjacentTileIndex;
+    float x, y;
+    x = m_tiles.at(visibleTileIndex).getX();
+    y = m_tiles.at(visibleTileIndex).getY();
+
+    if (isValidTile(sf::Vector2f{x - simpleConst::tileWidthf, y}, adjacentTileIndex) && m_tiles.at(adjacentTileIndex).hasCollision())
+    {
+        m_visibleTiles.insert(adjacentTileIndex);
+    }
+    if (isValidTile(sf::Vector2f{x, y - simpleConst::tileWidthf}, adjacentTileIndex) && m_tiles.at(adjacentTileIndex).hasCollision())
+    {
+        m_visibleTiles.insert(adjacentTileIndex);
+    }
+    if (isValidTile(sf::Vector2f{x + simpleConst::tileWidthf, y}, adjacentTileIndex) && m_tiles.at(adjacentTileIndex).hasCollision())
+    {
+        m_visibleTiles.insert(adjacentTileIndex);
+    }
+    if (isValidTile(sf::Vector2f{x, y + simpleConst::tileWidthf}, adjacentTileIndex) && m_tiles.at(adjacentTileIndex).hasCollision())
+    {
+        m_visibleTiles.insert(adjacentTileIndex);
+    }
+}
+
+bool Dungeon::tileHasEnemyInRange(int tileIndex, int playerDistance, int minRange, int maxRange)
+{
+    bool enemyInRange = false;
+    if (playerDistance <= maxRange && playerDistance >= minRange &&
+        m_tiles.at(tileIndex).hasUnit())
+    {
+        auto search = m_enemies.find(tileIndex);
+        if (search != m_enemies.end() && search->second.isAlive())
+        {
+            enemyInRange = true;
+        }
+    }
+    return enemyInRange;
+}
+
+void Dungeon::clearVisibleTiles()
 {
     for (auto const &tileIndex : m_attackableTiles)
     {
@@ -115,8 +228,10 @@ void Dungeon::clearAttackableTiles()
     }
 
     m_attackableTiles.clear();
+    m_visibleTiles.clear();
 }
 
+// if true, postion returns as the grid-aligned position of the tile
 bool Dungeon::isTileAtPosition(sf::Vector2f &position) const
 {
     int tileIndex;
@@ -128,14 +243,15 @@ bool Dungeon::isTileAtPosition(sf::Vector2f &position) const
     return false;
 }
 
-bool Dungeon::tileHasUnit(sf::Vector2f position) const
+bool Dungeon::tileAtPositionHasUnit(sf::Vector2f position) const
 {
     int tileIndex;
-    if (isValidTile(position, tileIndex))
-    {
-        return m_tiles.at(tileIndex).hasUnit();
-    }
-    return false;
+    return (isValidTile(position, tileIndex) && m_tiles.at(tileIndex).hasUnit());
+}
+
+void Dungeon::toggleUnitAtPosition(sf::Vector2f position)
+{
+    getTileAtPosition(position).toggleUnit();
 }
 
 Tile &Dungeon::getTileAtPosition(sf::Vector2f position)
@@ -146,18 +262,29 @@ Tile &Dungeon::getTileAtPosition(sf::Vector2f position)
 
 bool Dungeon::isValidTile(sf::Vector2f position, int &tileIndex) const
 {
+    bool isValid = true;
     if (position.x < 0 || position.x >= m_width * simpleConst::tileWidthf || position.y < 0 || position.y >= m_height * simpleConst::tileWidthf)
     {
-        return false;
+        isValid = false;
     }
-    tileIndex = ((int)(position.y / simpleConst::tileWidthf) * m_width) + (int)(position.x / simpleConst::tileWidthf);
-    return (tileIndex >= 0 && tileIndex < m_numberOfTiles);
+
+    if (isValid)
+    {
+        tileIndex = ((int)(position.y / simpleConst::tileWidthf) * m_width) + (int)(position.x / simpleConst::tileWidthf);
+    }
+    return (isValid && tileIndex >= 0 && tileIndex < m_numberOfTiles);
 }
 
-void Dungeon::removeEnemy(int defeatedEnemyIndex)
+int Dungeon::getTileIndexFromPosition(sf::Vector2f position) const
 {
-    m_enemies.erase(defeatedEnemyIndex);
-    m_tiles.at(defeatedEnemyIndex).toggleUnit();
+    int tileIndex;
+    assert(isValidTile(position, tileIndex));
+    return tileIndex;
+}
+
+int Dungeon::getTileIndexFromCoords(int x, int y) const
+{
+    return y * m_width + x;
 }
 
 void Dungeon::reset()
@@ -243,12 +370,12 @@ void Dungeon::generateProcedurally()
                     }
                     else
                     {
-                        //floor tile
+                        // floor tile
                         tileTextureIndex = 0;
                     }
 
                     m_tiles.erase(tileIndex);
-                    m_tiles.try_emplace(tileIndex ,tileSize, tileTextureIndex % 2 == 1, tileTextureIndex == 2);
+                    m_tiles.try_emplace(tileIndex, tileSize, tileTextureIndex % 2 == 1, tileTextureIndex == 2);
                     m_tiles.at(tileIndex).setTexture(m_texture);
                     m_tiles.at(tileIndex).setTextureRect(
                         sf::IntRect{
@@ -292,42 +419,10 @@ void Dungeon::populateWithEnemies()
     }
 }
 
-bool Dungeon::los(sf::Vector2f currentTile, sf::Vector2f targetTile) const
+Enemy &Dungeon::getEnemyAtCoords(int x, int y)
 {
-    // TODO: still behaves differently if slope is 3 vs 1/3...
-    int tileIndex;
-    float currentX = currentTile.x + simpleConst::tileWidthf/2, currentY = currentTile.y + simpleConst::tileWidthf/2;
-    float targetX = targetTile.x + simpleConst::tileWidthf/2, targetY = targetTile.y + simpleConst::tileWidthf/2;
-    if (currentX == targetX)
-    {
-        // x is the same so there's no slope
-        // walk the tiles in the Y-direction
-        // checking whether each is invalid or collidable
-        while (currentY != targetY)
-        {
-            currentY += (currentY < targetY) ? c_losIncrement : c_losDecrement;
-            if (!isValidTile(sf::Vector2f{currentX, currentY}, tileIndex) || m_tiles.at(tileIndex).hasCollision())
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    // walk the line from center of currentTile to the center of targetTile
-    // checking whether each tile is invalid or collidable
-    float slope = (targetY - currentY) / (targetX - currentX);
-    while (currentX != targetX)
-    {
-        currentX += (currentX < targetX) ? c_losIncrement : c_losDecrement;
-        currentY = targetY - (slope * (targetX - currentX));
-        if (!isValidTile(sf::Vector2f{currentX, currentY}, tileIndex) || m_tiles.at(tileIndex).hasCollision())
-        {
-            return false;
-        }
-    }
-    return true;
+    int tileIndex = getTileIndexFromCoords(x, y);
+    return m_enemies.at(tileIndex);
 }
 
 void Dungeon::initialize(size_t width, size_t height, Biome biome)
