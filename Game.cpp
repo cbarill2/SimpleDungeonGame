@@ -148,6 +148,7 @@ bool Game::tryGrabDie(sf::Vector2f clickPosition)
         {
             m_heldDie = &die;
             m_isRolling = true;
+            die.startRolling();
         }
     }
     return m_isRolling;
@@ -370,9 +371,9 @@ void Game::processInput()
             {
                 if (m_isRolling)
                 {
+                    m_heldDie->stopRolling();
                     m_lastRoll = m_heldDie->roll();
                     m_rollText.setString(m_heldDie->toString() + ": " + std::to_string(m_lastRoll));
-                    m_heldDie->resetPosition();
                     m_isRolling = false;
                     if (currentPlayer.isAttacking() && currentPlayer.isRollingAttackDie(m_heldDie->getNumberOfSides()))
                     {

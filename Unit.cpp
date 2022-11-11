@@ -101,7 +101,7 @@ void Unit::advanceAnimation()
     {
         m_currentAnimFrame = 0;
     }
-    setTextureRect(sf::IntRect{m_currentAnimFrame * c_animFrameHeight, 0, c_animFrameWidth, c_animFrameHeight});
+    setTextureRect(sf::IntRect{m_currentAnimFrame * c_animFrameWidth, 0, c_animFrameWidth, c_animFrameHeight});
 }
 
 void Unit::draw(sf::RenderWindow &window) const

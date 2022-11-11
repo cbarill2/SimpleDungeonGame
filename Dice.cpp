@@ -22,4 +22,26 @@ int Dice::roll()
 void Dice::resetPosition()
 {
     setPosition(m_homePosition);
+    setTextureRect(sf::IntRect{getTextureRect().left, 0, c_animFrameWidth, c_animFrameHeight});
+}
+
+void Dice::update()
+{
+    if (m_isRolling)
+    {
+        if (m_animClock.getElapsedTime().asMilliseconds() > m_animDuration)
+        {
+            advanceAnimation();
+            m_animClock.restart();
+        }
+    }
+}
+
+void Dice::advanceAnimation()
+{
+    if (++m_currentAnimFrame >= c_animMaxFrames)
+    {
+        m_currentAnimFrame = 0;
+    }
+    setTextureRect(sf::IntRect{getTextureRect().left, m_currentAnimFrame * c_animFrameHeight, c_animFrameWidth, c_animFrameHeight});
 }
